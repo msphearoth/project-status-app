@@ -1,58 +1,193 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Project Status App
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel application for recording road/pipe project details and tracking each project's status through its assignment lifecycle. Supports English and Khmer.
 
-## About Laravel
+## What it does
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- A project starts as **PENDING** with no assignee.
+- An **admin** assigns it to any user, which moves it to **IN_PROGRESS** and records an entry in the assignment log.
+- The current **assignee** can reassign it to someone else (stays **IN_PROGRESS**, logged) or mark it **COMPLETED** (requires entering `project_amount` and `request_number`).
+- Every assignment, reassignment, and completion is recorded in `project_assignment_logs` with who did it, who it went to, and when.
+- Everyone can view every project; only an admin or the current assignee can act on one.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Fields tracked per project: `on_road`, `start_road`, `end_road`, `pipe_type`, `pipe_diameter`, `pipe_length`, `received_date`, `project_code`, `work_code`, `project_amount`, `request_number`, plus `status` and the assignment trail.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Tech stack
 
-## Learning Laravel
+- **Backend/Frontend:** Laravel 13 (Blade + Tailwind CSS via Laravel Breeze)
+- **Database:** MariaDB
+- **Localization:** English (`en`) and Khmer (`km`)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Requirements
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- PHP 8.3+
+- Composer
+- Node.js 18+ and npm
+- MariaDB 10.6+ (or MySQL 8+) server, running
+- Git (optional, for version control)
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+If any of these aren't installed yet, see [Installing prerequisites](#installing-prerequisites-fresh-machine) below.
 
-## Agentic Development
+## Quick start
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+If you have [GNU Make](#installing-prerequisites-fresh-machine) available:
 
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```sh
+make setup   # installs dependencies, creates .env, creates the DB, migrates, seeds, builds assets
+make serve   # starts the app at http://127.0.0.1:8000
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+That's it — skip to [Admin & login access](#admin--login-access) below.
 
-## Contributing
+Run `make help` any time to see every available target.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Without `make`
 
-## Code of Conduct
+Do the same steps manually, from the project root:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```sh
+composer install
+npm install
 
-## Security Vulnerabilities
+cp .env.example .env          # Windows PowerShell: Copy-Item .env.example .env
+php artisan key:generate
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# create the database (see .env for host/user/password/name)
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS project_status_app CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+# or: php scripts/create-database.php
 
-## License
+php artisan migrate
+php artisan db:seed
+npm run build
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+php artisan serve
+```
+
+Then open **http://127.0.0.1:8000**.
+
+## Configuring `.env`
+
+Copy `.env.example` to `.env` (done automatically by `make env` / `make setup`) and adjust if your MariaDB credentials differ from the defaults:
+
+```
+DB_CONNECTION=mariadb
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=project_status_app
+DB_USERNAME=root
+DB_PASSWORD=root
+
+APP_LOCALE=en
+APP_SUPPORTED_LOCALES=en,km
+```
+
+## Admin & login access
+
+The seeder (`database/seeders/DatabaseSeeder.php`) creates these accounts. **Every account uses the password `password`.**
+
+| Name        | Email                 | Role  | Can do                                                             |
+|-------------|-----------------------|-------|---------------------------------------------------------------------|
+| Admin User  | `admin@example.com`   | Admin | Create projects, assign any project, reassign/complete any project |
+| Staff One   | `staff1@example.com`  | User  | Reassign/complete projects currently assigned to them              |
+| Staff Two   | `staff2@example.com`  | User  | Reassign/complete projects currently assigned to them              |
+| Staff Three | `staff3@example.com`  | User  | Reassign/complete projects currently assigned to them              |
+| Staff Four  | `staff4@example.com`  | User  | Reassign/complete projects currently assigned to them              |
+
+15 sample projects are seeded (5 pending, 5 in-progress, 5 completed) so there's data to look at immediately.
+
+To change someone's role, update the `role` column on `users` (`admin` or `user`) — there's no UI for this yet.
+
+## Database access
+
+**Laravel Tinker** (query via Eloquent, no extra tools needed):
+
+```sh
+php artisan tinker
+```
+```php
+App\Models\Project::with('assignee', 'creator')->get();
+App\Models\ProjectAssignmentLog::latest()->get();
+App\Models\User::all();
+```
+
+**MariaDB command line**:
+
+```sh
+mysql -u root -p project_status_app
+```
+(password `root` unless you changed it in `.env`). Then e.g. `SELECT * FROM projects;`.
+
+**A GUI browser** (optional, easiest for browsing/editing visually): install [HeidiSQL](https://www.heidisql.com/) (Windows) or [DBeaver](https://dbeaver.io/) (cross-platform), and connect with:
+- Host: `127.0.0.1`, Port: `3306`
+- User: `root`, Password: `root` (or whatever you set in `.env`)
+- Database: `project_status_app`
+
+## Localization
+
+- Language switcher is in the top navigation (EN / ខ្មែរ). The choice is stored in the session.
+- Translated strings for the app's own UI live in `lang/km.json` (short-string JSON translations, keyed by the English text).
+- Framework strings (validation messages, auth messages, pagination) are in `lang/en/*.php` and `lang/km/*.php`.
+- To add a new language: duplicate `lang/km.json` and the `lang/km/` folder for the new locale code, then add that code to `APP_SUPPORTED_LOCALES` in `.env`.
+
+## Running tests
+
+```sh
+make test
+# or: php artisan test
+```
+
+33 feature tests cover the assignment/completion workflow and authorization rules (who can create, assign, reassign, and complete a project).
+
+## Code style
+
+```sh
+make pint
+# or: php vendor/bin/pint
+```
+
+## Useful Make targets
+
+| Command             | What it does                                                        |
+|----------------------|----------------------------------------------------------------------|
+| `make setup`         | Full first-time setup: install, .env, DB creation, migrate, seed, build |
+| `make install`       | `composer install` + `npm install`                                  |
+| `make env`           | Create `.env` (if missing) and generate `APP_KEY` (if not already set) |
+| `make db-create`     | Create the database named in `.env`                                 |
+| `make migrate`       | Run pending migrations                                              |
+| `make migrate-fresh` | Drop all tables and re-run every migration                          |
+| `make seed`          | Re-run the seeders                                                  |
+| `make fresh`         | `migrate-fresh` + `seed`                                            |
+| `make serve`         | Start the dev server at http://127.0.0.1:8000                       |
+| `make dev`           | Start the dev server + Vite together (hot reload while editing CSS/JS) |
+| `make build`         | Build production frontend assets                                    |
+| `make test`          | Run the PHPUnit test suite                                          |
+| `make pint`          | Run Laravel Pint (code style fixer)                                 |
+| `make clean`         | Remove `vendor/`, `node_modules/`, build output, and framework caches |
+
+## Installing prerequisites (fresh machine)
+
+If you're setting this up on a machine that doesn't have PHP/Composer/Node/MariaDB/Git/Make yet:
+
+**Windows (winget, run in an elevated PowerShell):**
+```powershell
+winget install --id PHP.PHP.8.4 -e
+winget install --id OpenJS.NodeJS.LTS -e
+winget install --id Git.Git -e
+winget install --id MariaDB.Server -e
+winget install --id ezwinports.make -e   # optional, only needed for the `make` commands
+```
+Then in `php.ini`, enable: `pdo_mysql`, `mbstring`, `openssl`, `curl`, `fileinfo`, `bcmath`, `zip` (and `pdo_sqlite`/`sqlite3` if you want to run the test suite, which uses an in-memory SQLite database). Composer isn't on winget — install it from [getcomposer.org/download](https://getcomposer.org/download/).
+
+**macOS:**
+```sh
+brew install php composer node mariadb git make
+brew services start mariadb
+```
+
+**Linux (Debian/Ubuntu):**
+```sh
+sudo apt install php php-mbstring php-xml php-mysql php-curl php-bcmath php-zip composer nodejs npm mariadb-server git make
+sudo systemctl start mariadb
+```
+
+After installing, open a **new** terminal window before running `make setup` — PATH changes from an installer don't apply to terminals that were already open.

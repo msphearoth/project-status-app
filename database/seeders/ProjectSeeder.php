@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\ProjectAssignmentAction;
+use App\Enums\ProjectStatus;
 use App\Enums\UserRole;
 use App\Models\Project;
 use App\Models\User;
@@ -23,12 +24,15 @@ class ProjectSeeder extends Seeder
             ->create(['created_by' => $admin->id]);
 
         Project::factory()
-            ->inProgress()
             ->count(5)
             ->create(['created_by' => $admin->id])
             ->each(function (Project $project) use ($admin, $staff) {
                 $assignee = $staff->random();
-                $project->update(['assignee_id' => $assignee->id]);
+
+                $project->update([
+                    'status' => ProjectStatus::InProgress,
+                    'assignee_id' => $assignee->id,
+                ]);
 
                 $project->assignmentLogs()->create([
                     'action' => ProjectAssignmentAction::Assigned,
@@ -38,12 +42,18 @@ class ProjectSeeder extends Seeder
             });
 
         Project::factory()
-            ->completed()
             ->count(5)
             ->create(['created_by' => $admin->id])
             ->each(function (Project $project) use ($admin, $staff) {
                 $assignee = $staff->random();
-                $project->update(['assignee_id' => $assignee->id]);
+
+                $project->update([
+                    'status' => ProjectStatus::Completed,
+                    'assignee_id' => $assignee->id,
+                    'project_amount' => fake()->randomFloat(2, 1000, 100000),
+                    'request_number' => 'REQ-'.fake()->unique()->numerify('#####'),
+                    'completed_at' => now(),
+                ]);
 
                 $project->assignmentLogs()->create([
                     'action' => ProjectAssignmentAction::Assigned,

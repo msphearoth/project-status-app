@@ -20,7 +20,11 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@example.com',
         ]);
 
-        User::factory()->count(4)->create();
+        collect(['Staff One', 'Staff Two', 'Staff Three', 'Staff Four'])
+            ->each(fn (string $name, int $i) => User::factory()->create([
+                'name' => $name,
+                'email' => 'staff'.($i + 1).'@example.com',
+            ]));
 
         $this->call(ProjectSeeder::class);
     }
