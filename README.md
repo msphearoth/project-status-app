@@ -156,6 +156,7 @@ mysql -u root -p project_status_app
 - Translated strings for the app's own UI live in `lang/km.json` (short-string JSON translations, keyed by the English text).
 - Framework strings (validation messages, auth messages, pagination) are in `lang/en/*.php` and `lang/km/*.php`.
 - To add a new language: duplicate `lang/km.json` and the `lang/km/` folder for the new locale code, then add that code to `APP_SUPPORTED_LOCALES` in `.env`.
+- Khmer text renders in the **Kantumruy** font. It's loaded alongside the English UI font (Figtree) and placed right after it in the Tailwind `sans` font stack (`tailwind.config.js`), so the browser automatically uses Kantumruy for Khmer characters and Figtree for Latin ones in the same piece of text — no per-locale CSS switching needed. Run `make build` (or `npm run build`) after editing `tailwind.config.js` for font changes to take effect.
 
 ## Running tests
 
