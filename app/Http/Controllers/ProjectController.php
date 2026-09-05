@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ProjectsExport;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProjectController extends Controller
 {
@@ -19,7 +23,38 @@ class ProjectController extends Controller
     {
         $this->authorize('viewAny', Project::class);
 
-        $projects = Project::query()
+        $projects = $this->filteredQuery($request)
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('projects.index', [
+            'projects' => $projects,
+        ]);
+    }
+
+    /**
+     * Download the filtered project list (same filters as the index) as an
+     * Excel spreadsheet, including every project field and the current
+     * assignee's name and latest assignment date.
+     */
+    public function export(Request $request): BinaryFileResponse
+    {
+        $this->authorize('viewAny', Project::class);
+
+        $projects = $this->filteredQuery($request)->latest()->get();
+
+        $filename = 'projects-'.now()->format('Y-m-d').'.xlsx';
+
+        return Excel::download(new ProjectsExport($projects), $filename);
+    }
+
+    /**
+     * @return Builder<Project>
+     */
+    private function filteredQuery(Request $request): Builder
+    {
+        return Project::query()
             ->with(['assignee', 'creator', 'latestAssignmentLog'])
             ->when($request->string('status')->toString(), fn ($query, $status) => $query->where('status', $status))
             ->when($request->string('search')->toString(), function ($query, $search) {
@@ -28,14 +63,7 @@ class ProjectController extends Controller
                         ->orWhere('work_code', 'like', "%{$search}%")
                         ->orWhere('on_road', 'like', "%{$search}%");
                 });
-            })
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
-
-        return view('projects.index', [
-            'projects' => $projects,
-        ]);
+            });
     }
 
     /**

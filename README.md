@@ -18,6 +18,8 @@ The Dashboard nav item shows in-progress (assigned, not yet completed) projects 
 
 **Export to Excel** downloads this exact table as an `.xlsx` file (`app/Exports/DashboardExport.php`, powered by [maatwebsite/excel](https://docs.laravel-excel.com/)) — same year/assignee grouping, with the Year column merged across each year's rows the same way it is on the page.
 
+The **Projects** list has its own **Export to Excel** button too (`app/Exports/ProjectsExport.php`), which downloads every field on every project matching the current Search/Status filter (not just the current page) plus two extra columns: the current assignee's name (or "Unassigned") and the date of their latest assignment.
+
 ## Tech stack
 
 - **Backend/Frontend:** Laravel 13 (Blade + Tailwind CSS via Laravel Breeze)
@@ -162,7 +164,7 @@ make test
 # or: php artisan test
 ```
 
-55 feature tests cover the project assignment/completion workflow, the dashboard's year/assignee grouping and Excel export, and the user management authorization rules (who can create, assign, reassign, complete, list, edit, and delete).
+58 feature tests cover the project assignment/completion workflow, both Excel exports (dashboard and projects), and the user management authorization rules (who can create, assign, reassign, complete, list, edit, and delete).
 
 ## Code style
 
