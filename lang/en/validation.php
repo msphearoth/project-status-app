@@ -202,6 +202,7 @@ return [
         'email' => 'email',
         'password' => 'password',
         'project_code' => 'project code',
+        'year' => 'year',
         'work_code' => 'work code',
         'on_road' => 'road',
         'start_road' => 'start point',

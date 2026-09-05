@@ -33,6 +33,7 @@ class ProjectSeeder extends Seeder
                 $project->update([
                     'status' => ProjectStatus::InProgress,
                     'assignee_id' => $assignee->id,
+                    'year' => fake()->randomElement([now()->year, now()->year - 1]),
                 ]);
 
                 $project->assignmentLogs()->create([

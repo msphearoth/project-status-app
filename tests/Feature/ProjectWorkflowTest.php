@@ -18,6 +18,7 @@ class ProjectWorkflowTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('projects.store'), [
             'project_code' => 'PRJ-0001',
+            'year' => now()->year,
             'work_code' => 'WRK-0001',
             'on_road' => 'Main St',
             'start_road' => '1st Ave',
@@ -35,12 +36,34 @@ class ProjectWorkflowTest extends TestCase
         $this->assertNull($project->assignee_id);
     }
 
+    public function test_creating_a_project_requires_a_valid_year(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('projects.store'), [
+            'project_code' => 'PRJ-BADYEAR',
+            'year' => 1899,
+            'work_code' => 'WRK-0003',
+            'on_road' => 'Main St',
+            'start_road' => '1st Ave',
+            'end_road' => '5th Ave',
+            'pipe_type' => 'PVC',
+            'pipe_diameter' => 100,
+            'pipe_length' => 500,
+            'received_date' => now()->toDateString(),
+        ]);
+
+        $response->assertSessionHasErrors('year');
+        $this->assertDatabaseMissing('projects', ['project_code' => 'PRJ-BADYEAR']);
+    }
+
     public function test_a_regular_user_can_create_a_project(): void
     {
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('projects.store'), [
             'project_code' => 'PRJ-0002',
+            'year' => now()->year,
             'work_code' => 'WRK-0002',
             'on_road' => 'Main St',
             'start_road' => '1st Ave',
@@ -62,6 +85,7 @@ class ProjectWorkflowTest extends TestCase
 
         $this->actingAs($user)->put(route('projects.update', $project), [
             'project_code' => $project->project_code,
+            'year' => $project->year,
             'work_code' => 'WRK-UPDATED',
             'on_road' => $project->on_road,
             'start_road' => $project->start_road,

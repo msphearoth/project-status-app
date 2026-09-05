@@ -97,4 +97,64 @@ class DashboardTest extends TestCase
             ->assertOk()
             ->assertSee('No in-progress projects.');
     }
+
+    public function test_dashboard_gives_the_same_assignee_a_separate_row_per_year(): void
+    {
+        $viewer = User::factory()->create();
+        $assignee = User::factory()->create();
+
+        $thisYear = Project::factory()->inProgress()->create([
+            'created_by' => $viewer->id,
+            'assignee_id' => $assignee->id,
+            'year' => now()->year,
+        ]);
+        $this->assignProject($thisYear, $viewer, $assignee, 1);
+
+        $lastYear = Project::factory()->inProgress()->create([
+            'created_by' => $viewer->id,
+            'assignee_id' => $assignee->id,
+            'year' => now()->year - 1,
+        ]);
+        $this->assignProject($lastYear, $viewer, $assignee, 1);
+
+        $response = $this->actingAs($viewer)->get(route('dashboard'));
+
+        $response->assertViewHas('rows', function ($rows) use ($assignee) {
+            $matching = $rows->filter(fn (array $row) => $row['assignee']?->id === $assignee->id);
+
+            return $matching->count() === 2
+                && $matching->pluck('year')->sort()->values()->all() === [now()->year - 1, now()->year];
+        });
+    }
+
+    public function test_dashboard_year_rowspan_covers_every_assignee_row_in_that_year(): void
+    {
+        $viewer = User::factory()->create();
+        $first = User::factory()->create(['name' => 'Aaa Assignee']);
+        $second = User::factory()->create(['name' => 'Bbb Assignee']);
+
+        $firstProject = Project::factory()->inProgress()->create([
+            'created_by' => $viewer->id,
+            'assignee_id' => $first->id,
+            'year' => now()->year,
+        ]);
+        $this->assignProject($firstProject, $viewer, $first, 1);
+
+        $secondProject = Project::factory()->inProgress()->create([
+            'created_by' => $viewer->id,
+            'assignee_id' => $second->id,
+            'year' => now()->year,
+        ]);
+        $this->assignProject($secondProject, $viewer, $second, 1);
+
+        $response = $this->actingAs($viewer)->get(route('dashboard'));
+
+        $response->assertViewHas('rows', function ($rows) {
+            $rows = $rows->values();
+
+            return $rows->count() === 2
+                && $rows[0]['yearRowspan'] === 2
+                && $rows[1]['yearRowspan'] === null;
+        });
+    }
 }

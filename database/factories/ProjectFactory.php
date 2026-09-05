@@ -21,6 +21,7 @@ class ProjectFactory extends Factory
     {
         return [
             'project_code' => 'PRJ-'.$this->faker->unique()->numerify('#####'),
+            'year' => now()->year,
             'work_code' => 'WRK-'.$this->faker->numerify('#####'),
             'on_road' => $this->faker->streetName(),
             'start_road' => $this->faker->streetName(),

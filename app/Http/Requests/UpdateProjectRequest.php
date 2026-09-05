@@ -28,6 +28,7 @@ class UpdateProjectRequest extends FormRequest
                 'required', 'string', 'max:255',
                 Rule::unique('projects', 'project_code')->ignore($this->route('project')),
             ],
+            'year' => ['required', 'integer', 'digits:4', 'min:2000', 'max:'.(now()->year + 10)],
             'work_code' => ['required', 'string', 'max:255'],
             'on_road' => ['required', 'string', 'max:255'],
             'start_road' => ['required', 'string', 'max:255'],

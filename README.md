@@ -10,7 +10,11 @@ A Laravel application for recording road/pipe project details and tracking each 
 - Every assignment, reassignment, and completion is recorded in `project_assignment_logs` with who did it, who it went to, and when.
 - Everyone can view, create, edit, delete, assign, reassign, and complete every project. The only thing role restricts is [user management](#user-management-role-based-access-control) (admins only).
 
-Fields tracked per project: `on_road`, `start_road`, `end_road`, `pipe_type`, `pipe_diameter`, `pipe_length`, `received_date`, `project_code`, `work_code`, `project_amount`, `request_number`, plus `status` and the assignment trail.
+Fields tracked per project: `project_code`, `year`, `work_code`, `on_road`, `start_road`, `end_road`, `pipe_type`, `pipe_diameter`, `pipe_length`, `received_date`, `project_amount`, `request_number`, plus `status` and the assignment trail. `year` is a plain number the user picks when creating or editing a project (defaults to the current year) — it's independent of `received_date`.
+
+## Dashboard
+
+The Dashboard nav item shows in-progress (assigned, not yet completed) projects grouped by **year**, then by **current assignee**, broken down by how many days it's been since the last assignment: less than 5, 5 to 10, or 10 or more. Years are sorted newest first; within a year, assignees are sorted alphabetically. The `Year` column is merged (`rowspan`) across every assignee row that belongs to that year, so an assignee with projects in two different years gets two separate rows — one per year — each with its own day-bucket counts. A grand-total row sits at the bottom.
 
 ## Tech stack
 
@@ -156,7 +160,7 @@ make test
 # or: php artisan test
 ```
 
-47 feature tests cover the project assignment/completion workflow and the user management authorization rules (who can create, assign, reassign, complete, list, edit, and delete).
+54 feature tests cover the project assignment/completion workflow, the dashboard's year/assignee grouping, and the user management authorization rules (who can create, assign, reassign, complete, list, edit, and delete).
 
 ## Code style
 

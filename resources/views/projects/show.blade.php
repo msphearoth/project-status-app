@@ -63,6 +63,10 @@
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">{{ __('Project Details') }}</h3>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
                     <div>
+                        <dt class="text-gray-500 dark:text-gray-400">{{ __('Year') }}</dt>
+                        <dd class="text-gray-900 dark:text-gray-100">{{ $project->year }}</dd>
+                    </div>
+                    <div>
                         <dt class="text-gray-500 dark:text-gray-400">{{ __('Work Code') }}</dt>
                         <dd class="text-gray-900 dark:text-gray-100">{{ $project->work_code }}</dd>
                     </div>

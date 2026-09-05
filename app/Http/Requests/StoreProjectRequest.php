@@ -25,6 +25,7 @@ class StoreProjectRequest extends FormRequest
     {
         return [
             'project_code' => ['required', 'string', 'max:255', 'unique:projects,project_code'],
+            'year' => ['required', 'integer', 'digits:4', 'min:2000', 'max:'.(now()->year + 10)],
             'work_code' => ['required', 'string', 'max:255'],
             'on_road' => ['required', 'string', 'max:255'],
             'start_road' => ['required', 'string', 'max:255'],

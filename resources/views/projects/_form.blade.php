@@ -11,6 +11,13 @@
     </div>
 
     <div>
+        <x-input-label for="year" :value="__('Year')" />
+        <x-text-input id="year" name="year" type="number" step="1" min="2000" class="mt-1 block w-full"
+            :value="old('year', $project?->year ?? now()->year)" required />
+        <x-input-error :messages="$errors->get('year')" class="mt-2" />
+    </div>
+
+    <div>
         <x-input-label for="work_code" :value="__('Work Code')" />
         <x-text-input id="work_code" name="work_code" type="text" class="mt-1 block w-full"
             :value="old('work_code', $project?->work_code)" required />

@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'project_code',
+    'year',
     'work_code',
     'on_road',
     'start_road',
@@ -39,6 +40,7 @@ class Project extends Model
     protected function casts(): array
     {
         return [
+            'year' => 'integer',
             'pipe_diameter' => 'decimal:2',
             'pipe_length' => 'decimal:2',
             'project_amount' => 'decimal:2',
