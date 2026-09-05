@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectAssignmentController;
 use App\Http\Controllers\ProjectController;
@@ -19,7 +20,7 @@ Route::get('/locale/{locale}', function (string $locale) {
 })->name('locale.switch');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [ProjectController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('projects', ProjectController::class)->except(['destroy']);
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');

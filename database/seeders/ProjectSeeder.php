@@ -28,6 +28,7 @@ class ProjectSeeder extends Seeder
             ->create(['created_by' => $admin->id])
             ->each(function (Project $project) use ($admin, $staff) {
                 $assignee = $staff->random();
+                $assignedAt = now()->subDays(fake()->numberBetween(0, 14));
 
                 $project->update([
                     'status' => ProjectStatus::InProgress,
@@ -38,7 +39,7 @@ class ProjectSeeder extends Seeder
                     'action' => ProjectAssignmentAction::Assigned,
                     'assigned_by' => $admin->id,
                     'assigned_to' => $assignee->id,
-                ]);
+                ])->forceFill(['created_at' => $assignedAt])->save();
             });
 
         Project::factory()

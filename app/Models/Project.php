@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'project_code',
@@ -69,5 +70,16 @@ class Project extends Model
     public function assignmentLogs(): HasMany
     {
         return $this->hasMany(ProjectAssignmentLog::class)->latest('created_at');
+    }
+
+    /**
+     * The most recent assignment/reassignment/completion log entry, used to
+     * determine when the current assignee was assigned.
+     *
+     * @return HasOne<ProjectAssignmentLog, $this>
+     */
+    public function latestAssignmentLog(): HasOne
+    {
+        return $this->hasOne(ProjectAssignmentLog::class)->latestOfMany('created_at');
     }
 }
