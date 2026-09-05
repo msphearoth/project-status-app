@@ -35,7 +35,7 @@ class ProjectWorkflowTest extends TestCase
         $this->assertNull($project->assignee_id);
     }
 
-    public function test_non_admin_cannot_create_a_project(): void
+    public function test_a_regular_user_can_create_a_project(): void
     {
         $user = User::factory()->create();
 
@@ -51,8 +51,33 @@ class ProjectWorkflowTest extends TestCase
             'received_date' => now()->toDateString(),
         ]);
 
-        $response->assertForbidden();
-        $this->assertDatabaseMissing('projects', ['project_code' => 'PRJ-0002']);
+        $response->assertRedirect();
+        $this->assertDatabaseHas('projects', ['project_code' => 'PRJ-0002']);
+    }
+
+    public function test_a_regular_user_can_update_and_delete_a_project(): void
+    {
+        $user = User::factory()->create();
+        $project = Project::factory()->create(['created_by' => $user->id]);
+
+        $this->actingAs($user)->put(route('projects.update', $project), [
+            'project_code' => $project->project_code,
+            'work_code' => 'WRK-UPDATED',
+            'on_road' => $project->on_road,
+            'start_road' => $project->start_road,
+            'end_road' => $project->end_road,
+            'pipe_type' => $project->pipe_type,
+            'pipe_diameter' => $project->pipe_diameter,
+            'pipe_length' => $project->pipe_length,
+            'received_date' => $project->received_date->toDateString(),
+        ])->assertRedirect(route('projects.show', $project));
+
+        $this->assertSame('WRK-UPDATED', $project->fresh()->work_code);
+
+        $this->actingAs($user)->delete(route('projects.destroy', $project))
+            ->assertRedirect(route('projects.index'));
+
+        $this->assertModelMissing($project);
     }
 
     public function test_admin_can_assign_a_pending_project_which_moves_it_in_progress(): void
@@ -105,7 +130,7 @@ class ProjectWorkflowTest extends TestCase
         ]);
     }
 
-    public function test_unrelated_user_cannot_assign_or_complete_an_in_progress_project(): void
+    public function test_any_user_can_reassign_or_complete_a_project_they_are_not_assigned_to(): void
     {
         $admin = User::factory()->admin()->create();
         $assignee = User::factory()->create();
@@ -117,14 +142,18 @@ class ProjectWorkflowTest extends TestCase
 
         $this->actingAs($bystander)
             ->post(route('projects.assign', $project), ['assignee_id' => $bystander->id])
-            ->assertForbidden();
+            ->assertRedirect(route('projects.show', $project));
+
+        $this->assertSame($bystander->id, $project->fresh()->assignee_id);
 
         $this->actingAs($bystander)
             ->post(route('projects.complete', $project), [
                 'project_amount' => 1000,
                 'request_number' => 'REQ-1',
             ])
-            ->assertForbidden();
+            ->assertRedirect(route('projects.show', $project));
+
+        $this->assertSame(ProjectStatus::Completed, $project->fresh()->status);
     }
 
     public function test_assignee_can_complete_a_project_with_amount_and_request_number(): void

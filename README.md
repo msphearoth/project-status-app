@@ -5,10 +5,10 @@ A Laravel application for recording road/pipe project details and tracking each 
 ## What it does
 
 - A project starts as **PENDING** with no assignee.
-- An **admin** assigns it to any user, which moves it to **IN_PROGRESS** and records an entry in the assignment log.
-- The current **assignee** can reassign it to someone else (stays **IN_PROGRESS**, logged) or mark it **COMPLETED** (requires entering `project_amount` and `request_number`).
+- Any logged-in user can assign it to any other user, which moves it to **IN_PROGRESS** and records an entry in the assignment log.
+- Any logged-in user can reassign an in-progress project to someone else (stays **IN_PROGRESS**, logged) or mark it **COMPLETED** (requires entering `project_amount` and `request_number`) — not just the current assignee.
 - Every assignment, reassignment, and completion is recorded in `project_assignment_logs` with who did it, who it went to, and when.
-- Everyone can view every project; only an admin or the current assignee can act on one.
+- Everyone can view, create, edit, delete, assign, reassign, and complete every project. The only thing role restricts is [user management](#user-management-role-based-access-control) (admins only).
 
 Fields tracked per project: `on_road`, `start_road`, `end_road`, `pipe_type`, `pipe_diameter`, `pipe_length`, `received_date`, `project_code`, `work_code`, `project_amount`, `request_number`, plus `status` and the assignment trail.
 
@@ -85,13 +85,13 @@ APP_SUPPORTED_LOCALES=en,km
 
 The seeder (`database/seeders/DatabaseSeeder.php`) creates these accounts. **Every account uses the password `password`.**
 
-| Name        | Email                 | Role  | Can do                                                             |
-|-------------|-----------------------|-------|---------------------------------------------------------------------|
-| Admin User  | `admin@example.com`   | Admin | Create projects, assign any project, reassign/complete any project |
-| Staff One   | `staff1@example.com`  | User  | Reassign/complete projects currently assigned to them              |
-| Staff Two   | `staff2@example.com`  | User  | Reassign/complete projects currently assigned to them              |
-| Staff Three | `staff3@example.com`  | User  | Reassign/complete projects currently assigned to them              |
-| Staff Four  | `staff4@example.com`  | User  | Reassign/complete projects currently assigned to them              |
+| Name        | Email                 | Role  | Can do                                                    |
+|-------------|-----------------------|-------|------------------------------------------------------------|
+| Admin User  | `admin@example.com`   | Admin | Everything, including the Users page                      |
+| Staff One   | `staff1@example.com`  | User  | Everything project-related; no access to the Users page   |
+| Staff Two   | `staff2@example.com`  | User  | Everything project-related; no access to the Users page   |
+| Staff Three | `staff3@example.com`  | User  | Everything project-related; no access to the Users page   |
+| Staff Four  | `staff4@example.com`  | User  | Everything project-related; no access to the Users page   |
 
 15 sample projects are seeded (5 pending, 5 in-progress, 5 completed) so there's data to look at immediately.
 
@@ -111,7 +111,7 @@ Safeguards baked into the authorization rules (`app/Policies/UserPolicy.php`, `a
 - The last remaining admin cannot be demoted to a regular user — the role field is disabled on their edit page with an explanation, and the server rejects it too if bypassed.
 - A user who has created projects or has assignment history (they've assigned, reassigned, or completed a project) cannot be deleted — doing so would corrupt the project records and audit trail. You'll get a message telling you to reassign or remove those projects first, instead of a database error.
 
-Roles determine what a user can do elsewhere in the app: an **Admin** can create projects and make the first assignment on any project; a regular **User** can only reassign or complete a project currently assigned to them (see `app/Policies/ProjectPolicy.php`).
+This is the only place role matters. Every project action (view, create, edit, delete, assign, reassign, complete) is open to both Admin and User roles equally — see `app/Policies/ProjectPolicy.php`, which has no role checks at all, only project-status checks (e.g. you can't assign or complete a project that's already `COMPLETED`).
 
 ## Database access
 
@@ -152,7 +152,7 @@ make test
 # or: php artisan test
 ```
 
-46 feature tests cover the project assignment/completion workflow and the user management authorization rules (who can create, assign, reassign, complete, list, edit, and delete).
+47 feature tests cover the project assignment/completion workflow and the user management authorization rules (who can create, assign, reassign, complete, list, edit, and delete).
 
 ## Code style
 

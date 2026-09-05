@@ -29,7 +29,7 @@ class ProjectPolicy
      */
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return true;
     }
 
     /**
@@ -37,7 +37,7 @@ class ProjectPolicy
      */
     public function update(User $user, Project $project): bool
     {
-        return $user->isAdmin() && $project->status !== ProjectStatus::Completed;
+        return $project->status !== ProjectStatus::Completed;
     }
 
     /**
@@ -45,7 +45,7 @@ class ProjectPolicy
      */
     public function delete(User $user, Project $project): bool
     {
-        return $user->isAdmin();
+        return true;
     }
 
     /**
@@ -53,15 +53,7 @@ class ProjectPolicy
      */
     public function assign(User $user, Project $project): bool
     {
-        if ($project->status === ProjectStatus::Completed) {
-            return false;
-        }
-
-        if ($project->status === ProjectStatus::Pending) {
-            return $user->isAdmin();
-        }
-
-        return $user->isAdmin() || $user->id === $project->assignee_id;
+        return $project->status !== ProjectStatus::Completed;
     }
 
     /**
@@ -69,7 +61,6 @@ class ProjectPolicy
      */
     public function complete(User $user, Project $project): bool
     {
-        return $project->status === ProjectStatus::InProgress
-            && ($user->isAdmin() || $user->id === $project->assignee_id);
+        return $project->status === ProjectStatus::InProgress;
     }
 }
