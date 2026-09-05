@@ -16,9 +16,18 @@
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
-                <div class="p-6 pb-0">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ __('In-Progress Projects by Assignee') }}</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Currently assigned projects awaiting completion, grouped by year and their current assignee, and how many days it has been since assignment.') }}</p>
+                <div class="p-6 pb-0 flex items-start justify-between gap-4">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ __('In-Progress Projects by Assignee') }}</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Currently assigned projects awaiting completion, grouped by year and their current assignee, and how many days it has been since assignment.') }}</p>
+                    </div>
+
+                    @if ($rows->isNotEmpty())
+                        <a href="{{ route('dashboard.export') }}"
+                           class="inline-flex items-center shrink-0 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+                            {{ __('Export to Excel') }}
+                        </a>
+                    @endif
                 </div>
 
                 <div class="overflow-x-auto p-6">

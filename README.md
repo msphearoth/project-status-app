@@ -16,6 +16,8 @@ Fields tracked per project: `project_code`, `year`, `work_code`, `on_road`, `sta
 
 The Dashboard nav item shows in-progress (assigned, not yet completed) projects grouped by **year**, then by **current assignee**, broken down by how many days it's been since the last assignment: less than 5, 5 to 10, or 10 or more. Years are sorted newest first; within a year, assignees are sorted alphabetically. The `Year` column is merged (`rowspan`) across every assignee row that belongs to that year, so an assignee with projects in two different years gets two separate rows — one per year — each with its own day-bucket counts. A grand-total row sits at the bottom.
 
+**Export to Excel** downloads this exact table as an `.xlsx` file (`app/Exports/DashboardExport.php`, powered by [maatwebsite/excel](https://docs.laravel-excel.com/)) — same year/assignee grouping, with the Year column merged across each year's rows the same way it is on the page.
+
 ## Tech stack
 
 - **Backend/Frontend:** Laravel 13 (Blade + Tailwind CSS via Laravel Breeze)
@@ -160,7 +162,7 @@ make test
 # or: php artisan test
 ```
 
-54 feature tests cover the project assignment/completion workflow, the dashboard's year/assignee grouping, and the user management authorization rules (who can create, assign, reassign, complete, list, edit, and delete).
+55 feature tests cover the project assignment/completion workflow, the dashboard's year/assignee grouping and Excel export, and the user management authorization rules (who can create, assign, reassign, complete, list, edit, and delete).
 
 ## Code style
 

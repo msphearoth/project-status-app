@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Enums\ProjectAssignmentAction;
+use App\Exports\DashboardExport;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Maatwebsite\Excel\Facades\Excel;
 use Tests\TestCase;
 
 class DashboardTest extends TestCase
@@ -155,6 +157,45 @@ class DashboardTest extends TestCase
             return $rows->count() === 2
                 && $rows[0]['yearRowspan'] === 2
                 && $rows[1]['yearRowspan'] === null;
+        });
+    }
+
+    public function test_dashboard_can_be_exported_to_excel(): void
+    {
+        Excel::fake();
+
+        $viewer = User::factory()->create();
+        $first = User::factory()->create(['name' => 'Aaa Assignee']);
+        $second = User::factory()->create(['name' => 'Bbb Assignee']);
+
+        $firstProject = Project::factory()->inProgress()->create([
+            'created_by' => $viewer->id,
+            'assignee_id' => $first->id,
+            'year' => now()->year,
+        ]);
+        $this->assignProject($firstProject, $viewer, $first, 1);
+
+        $secondProject = Project::factory()->inProgress()->create([
+            'created_by' => $viewer->id,
+            'assignee_id' => $second->id,
+            'year' => now()->year - 1,
+        ]);
+        $this->assignProject($secondProject, $viewer, $second, 1);
+
+        $response = $this->actingAs($viewer)->get(route('dashboard.export'));
+
+        $response->assertOk();
+
+        $filename = 'dashboard-'.now()->format('Y-m-d').'.xlsx';
+
+        Excel::assertDownloaded($filename, function (DashboardExport $export) use ($first, $second) {
+            $headings = $export->headings();
+            $data = $export->array();
+
+            return $headings === ['Year', 'Assignee', 'Less than 5 Days', '5 to 10 Days', '10 Days or More', 'Total']
+                && $data[0] === [now()->year, $first->name, 1, 0, 0, 1]
+                && $data[1] === [now()->year - 1, $second->name, 1, 0, 0, 1]
+                && $data[2] === ['Total', '', 2, 0, 0, 2];
         });
     }
 }

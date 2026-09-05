@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProjectStatus;
+use App\Exports\DashboardExport;
 use App\Models\Project;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DashboardController extends Controller
 {
@@ -15,6 +19,29 @@ class DashboardController extends Controller
      * since they were assigned.
      */
     public function index(): View
+    {
+        return view('dashboard', [
+            'rows' => $this->buildRows(),
+        ]);
+    }
+
+    /**
+     * Download the same dashboard data as an Excel spreadsheet.
+     */
+    public function export(): BinaryFileResponse
+    {
+        $filename = 'dashboard-'.now()->format('Y-m-d').'.xlsx';
+
+        return Excel::download(new DashboardExport($this->buildRows()), $filename);
+    }
+
+    /**
+     * Build the year > assignee > day-bucket breakdown of in-progress
+     * projects shared by the dashboard view and its Excel export.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function buildRows(): Collection
     {
         $rows = Project::query()
             ->where('status', ProjectStatus::InProgress)
@@ -49,7 +76,7 @@ class DashboardController extends Controller
         $rowsPerYear = $rows->countBy('year');
         $seenYears = [];
 
-        $rows = $rows->map(function (array $row) use ($rowsPerYear, &$seenYears) {
+        return $rows->map(function (array $row) use ($rowsPerYear, &$seenYears) {
             $isFirstOfYear = ! isset($seenYears[$row['year']]);
             $seenYears[$row['year']] = true;
 
@@ -57,9 +84,5 @@ class DashboardController extends Controller
 
             return $row;
         });
-
-        return view('dashboard', [
-            'rows' => $rows,
-        ]);
     }
 }
