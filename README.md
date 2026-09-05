@@ -79,7 +79,11 @@ DB_PASSWORD=root
 
 APP_LOCALE=en
 APP_SUPPORTED_LOCALES=en,km
+
+APP_TIMEZONE=Asia/Phnom_Penh
 ```
+
+`APP_TIMEZONE` controls what "now" means for the whole app — every timestamp you see (assignment dates, completed-at, the dashboard's day buckets) is generated and displayed in this timezone. Change it if your team isn't in Cambodia; it accepts any [PHP timezone identifier](https://www.php.net/manual/en/timezones.php) (e.g. `Asia/Bangkok`, `UTC`).
 
 ## Admin & login access
 
