@@ -214,6 +214,7 @@ return [
         'request_number' => 'request number',
         'assignee_id' => 'assignee',
         'note' => 'note',
+        'role' => 'role',
     ],
 
 ];

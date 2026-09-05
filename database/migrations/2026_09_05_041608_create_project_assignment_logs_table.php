@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('project_id')->constrained()->cascadeOnDelete();
             $table->string('action');
-            $table->foreignId('assigned_by')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('assigned_by')->constrained('users')->restrictOnDelete();
             $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
             $table->text('note')->nullable();
             $table->timestamp('created_at')->nullable();

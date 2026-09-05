@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('request_number')->nullable();
             $table->string('status')->default(ProjectStatus::Pending->value);
             $table->foreignId('assignee_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
 

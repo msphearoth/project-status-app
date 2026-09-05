@@ -14,4 +14,12 @@ enum UserRole: string
             self::User => __('User'),
         };
     }
+
+    public function badgeClass(): string
+    {
+        return match ($this) {
+            self::Admin => 'bg-purple-100 text-purple-800 dark:bg-purple-800/30 dark:text-purple-400',
+            self::User => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+        };
+    }
 }

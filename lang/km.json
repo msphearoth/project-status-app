@@ -104,5 +104,23 @@
     "Project updated successfully.": "ធ្វើបច្ចុប្បន្នភាពគម្រោងបានជោគជ័យ។",
     "Project deleted successfully.": "លុបគម្រោងបានជោគជ័យ។",
     "Project assigned successfully.": "ចាត់តាំងគម្រោងបានជោគជ័យ។",
-    "Project marked as completed.": "គម្រោងត្រូវបានសម្គាល់ថាបានបញ្ចប់។"
+    "Project marked as completed.": "គម្រោងត្រូវបានសម្គាល់ថាបានបញ្ចប់។",
+
+    "Users": "អ្នកប្រើប្រាស់",
+    "New User": "អ្នកប្រើប្រាស់ថ្មី",
+    "Edit User": "កែសម្រួលអ្នកប្រើប្រាស់",
+    "Create User": "បង្កើតអ្នកប្រើប្រាស់",
+    "Role": "តួនាទី",
+    "Created Projects": "គម្រោងបានបង្កើត",
+    "Assigned Projects": "គម្រោងបានទទួលបន្ទុក",
+    "You": "អ្នក",
+    "Are you sure you want to delete :name?": "តើអ្នកប្រាកដទេថាចង់លុប :name?",
+    "This action cannot be undone.": "សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។",
+    "New Password (optional)": "ពាក្យសម្ងាត់ថ្មី (ស្រេចចិត្ត)",
+    "This is the last admin, so the role cannot be changed.": "នេះជាអ្នកគ្រប់គ្រងចុងក្រោយ ដូច្នេះមិនអាចផ្លាស់ប្តូរតួនាទីបានទេ។",
+    "User created successfully.": "បង្កើតអ្នកប្រើប្រាស់បានជោគជ័យ។",
+    "User updated successfully.": "ធ្វើបច្ចុប្បន្នភាពអ្នកប្រើប្រាស់បានជោគជ័យ។",
+    "User deleted successfully.": "លុបអ្នកប្រើប្រាស់បានជោគជ័យ។",
+    "You cannot remove the last remaining admin.": "អ្នកមិនអាចដកតួនាទីអ្នកគ្រប់គ្រងចុងក្រោយបានទេ។",
+    "This user cannot be deleted because they have created projects or have assignment history. Reassign or delete those projects first.": "អ្នកប្រើប្រាស់នេះមិនអាចលុបបានទេ ព្រោះពួកគេបានបង្កើតគម្រោង ឬមានប្រវត្តិការចាត់តាំង។ សូមចាត់តាំងគម្រោងទាំងនោះទៅអ្នកផ្សេង ឬលុបគម្រោងទាំងនោះជាមុនសិន។"
 }

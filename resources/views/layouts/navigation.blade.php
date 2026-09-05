@@ -23,6 +23,11 @@
                             {{ __('New Project') }}
                         </x-nav-link>
                     @endcan
+                    @can('viewAny', \App\Models\User::class)
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                            {{ __('Users') }}
+                        </x-nav-link>
+                    @endcan
                 </div>
             </div>
 
@@ -86,6 +91,11 @@
             @can('create', \App\Models\Project::class)
                 <x-responsive-nav-link :href="route('projects.create')" :active="request()->routeIs('projects.create')">
                     {{ __('New Project') }}
+                </x-responsive-nav-link>
+            @endcan
+            @can('viewAny', \App\Models\User::class)
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                    {{ __('Users') }}
                 </x-responsive-nav-link>
             @endcan
         </div>

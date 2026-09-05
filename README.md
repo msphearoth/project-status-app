@@ -95,7 +95,23 @@ The seeder (`database/seeders/DatabaseSeeder.php`) creates these accounts. **Eve
 
 15 sample projects are seeded (5 pending, 5 in-progress, 5 completed) so there's data to look at immediately.
 
-To change someone's role, update the `role` column on `users` (`admin` or `user`) — there's no UI for this yet.
+## User management (role-based access control)
+
+Admins have a **Users** page in the top navigation (`/users`, hidden from non-admins) where they can:
+
+- List every user with their role and how many projects they've created/are assigned to.
+- Create a new user, choosing their name, email, password, and role (Admin or User).
+- Edit a user: change their name, email, role, or reset their password. Non-admins cannot access this page at all (`403`).
+- Delete a user.
+
+Safeguards baked into the authorization rules (`app/Policies/UserPolicy.php`, `app/Http/Controllers/UserController.php`):
+
+- Only admins can view, create, edit, or delete users.
+- You cannot delete your own account from this page (use the profile page for that).
+- The last remaining admin cannot be demoted to a regular user — the role field is disabled on their edit page with an explanation, and the server rejects it too if bypassed.
+- A user who has created projects or has assignment history (they've assigned, reassigned, or completed a project) cannot be deleted — doing so would corrupt the project records and audit trail. You'll get a message telling you to reassign or remove those projects first, instead of a database error.
+
+Roles determine what a user can do elsewhere in the app: an **Admin** can create projects and make the first assignment on any project; a regular **User** can only reassign or complete a project currently assigned to them (see `app/Policies/ProjectPolicy.php`).
 
 ## Database access
 
@@ -136,7 +152,7 @@ make test
 # or: php artisan test
 ```
 
-33 feature tests cover the assignment/completion workflow and authorization rules (who can create, assign, reassign, and complete a project).
+46 feature tests cover the project assignment/completion workflow and the user management authorization rules (who can create, assign, reassign, complete, list, edit, and delete).
 
 ## Code style
 

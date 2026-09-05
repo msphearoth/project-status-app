@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectAssignmentController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -25,6 +26,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/projects/{project}/assign', [ProjectAssignmentController::class, 'assign'])->name('projects.assign');
     Route::post('/projects/{project}/complete', [ProjectAssignmentController::class, 'complete'])->name('projects.complete');
+
+    Route::resource('users', UserController::class)->except(['show']);
 });
 
 Route::middleware('auth')->group(function () {
