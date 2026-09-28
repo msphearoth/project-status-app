@@ -147,5 +147,16 @@
     "Remove :name from this project?": "ដក :name ចេញពីគម្រោងនេះ?",
     "The project will return to Pending with no assignee. The assignment history is kept.": "គម្រោងនឹងត្រឡប់ទៅស្ថានភាពរង់ចាំ ដោយគ្មានអ្នកទទួលខុសត្រូវ។ ប្រវត្តិការចាត់តាំងនៅតែរក្សាទុក។",
     "Standard User": "អ្នកប្រើប្រាស់ធម្មតា",
+    "Import from Excel": "នាំចូលពី Excel",
+    "Import Projects from Excel": "នាំចូលគម្រោងពី Excel",
+    "Download the template, enter one project per row below the heading row, then upload the file. Imported projects are created as Pending.": "ទាញយកគំរូ បញ្ចូលគម្រោងមួយក្នុងមួយជួរនៅក្រោមជួរចំណងជើង រួចផ្ទុកឯកសារឡើង។ គម្រោងដែលបាននាំចូលនឹងមានស្ថានភាពរង់ចាំ។",
+    "If any row has an error, nothing is imported. Fix the listed rows and upload the file again.": "ប្រសិនបើមានជួរណាមួយមានកំហុស នឹងគ្មានទិន្នន័យណាត្រូវបាននាំចូលទេ។ សូមកែជួរដែលបានបង្ហាញ ហើយផ្ទុកឯកសារឡើងម្តងទៀត។",
+    "Download Template": "ទាញយកគំរូ",
+    "Excel File": "ឯកសារ Excel",
+    "Import": "នាំចូល",
+    ":count projects imported successfully.": "បាននាំចូលគម្រោងចំនួន :count ដោយជោគជ័យ។",
+    "The file does not contain any projects.": "ឯកសារនេះមិនមានគម្រោងណាមួយទេ។",
+    "The project code :code already appears in row :row.": "លេខកូដគម្រោង :code មានរួចហើយនៅជួរ :row។",
+    "Row :row: :message": "ជួរ :row: :message",
     "This project is assigned to :name. Only the assignee or an admin can update, reassign or complete it.": "គម្រោងនេះត្រូវបានចាត់តាំងទៅ :name។ មានតែអ្នកទទួលខុសត្រូវ ឬអ្នកគ្រប់គ្រងប៉ុណ្ណោះដែលអាចកែប្រែ ចាត់តាំងឡើងវិញ ឬបញ្ចប់វាបាន។"
 }

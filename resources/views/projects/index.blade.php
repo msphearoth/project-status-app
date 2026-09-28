@@ -5,12 +5,21 @@
                 {{ __('Projects') }}
             </h2>
 
-            @if ($projects->isNotEmpty())
-                <a href="{{ route('projects.export', request()->query()) }}"
-                   class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700">
-                    {{ __('Export to Excel') }}
-                </a>
-            @endif
+            <div class="flex items-center gap-3">
+                @can('create', \App\Models\Project::class)
+                    <a href="{{ route('projects.import.create') }}"
+                       class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+                        {{ __('Import from Excel') }}
+                    </a>
+                @endcan
+
+                @if ($projects->isNotEmpty())
+                    <a href="{{ route('projects.export', request()->query()) }}"
+                       class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+                        {{ __('Export to Excel') }}
+                    </a>
+                @endif
+            </div>
         </div>
     </x-slot>
 

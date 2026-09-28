@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectAssignmentController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectImportController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard/export', [DashboardController::class, 'export'])->name('dashboard.export');
 
     Route::get('/projects/export', [ProjectController::class, 'export'])->name('projects.export');
+    Route::get('/projects/import', [ProjectImportController::class, 'create'])->name('projects.import.create');
+    Route::get('/projects/import/template', [ProjectImportController::class, 'template'])->name('projects.import.template');
+    Route::post('/projects/import', [ProjectImportController::class, 'store'])->name('projects.import.store');
     Route::resource('projects', ProjectController::class)->except(['destroy']);
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
 
