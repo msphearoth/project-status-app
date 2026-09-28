@@ -30,6 +30,7 @@ class ProjectController extends Controller
 
         return view('projects.index', [
             'projects' => $projects,
+            'assignees' => User::orderBy('name')->get(),
         ]);
     }
 
@@ -57,6 +58,7 @@ class ProjectController extends Controller
         return Project::query()
             ->with(['assignee', 'creator', 'latestAssignmentLog'])
             ->when($request->string('status')->toString(), fn ($query, $status) => $query->where('status', $status))
+            ->when($request->integer('assignee_id'), fn ($query, $assigneeId) => $query->where('assignee_id', $assigneeId))
             ->when($request->string('search')->toString(), function ($query, $search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('project_code', 'like', "%{$search}%")
@@ -97,7 +99,7 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load(['assignee', 'creator', 'assignmentLogs.assignedBy', 'assignmentLogs.assignedTo']);
+        $project->load(['assignee', 'creator', 'assignmentLogs.assignedBy', 'assignmentLogs.assignedFrom', 'assignmentLogs.assignedTo']);
 
         return view('projects.show', [
             'project' => $project,

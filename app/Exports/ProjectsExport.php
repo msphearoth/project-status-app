@@ -66,7 +66,7 @@ class ProjectsExport implements FromArray, ShouldAutoSize, WithHeadings, WithSty
             $project->received_date->format('Y-m-d'),
             $project->status->label(),
             $project->assignee?->name ?? __('Unassigned'),
-            $project->latestAssignmentLog?->created_at?->format('Y-m-d') ?? '',
+            $project->assignee_id ? $project->latestAssignmentLog?->assignedDate()?->format('Y-m-d') ?? '' : '',
             $project->project_amount !== null ? (float) $project->project_amount : '',
             $project->request_number ?? '',
             $project->creator?->name,
