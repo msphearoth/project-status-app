@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ProjectAssignmentAction;
 use App\Enums\ProjectStatus;
 use App\Http\Requests\AssignProjectRequest;
+use App\Http\Requests\BulkAssignProjectsRequest;
 use App\Http\Requests\CompleteProjectRequest;
 use App\Models\Project;
 use Illuminate\Http\RedirectResponse;
@@ -18,32 +19,40 @@ class ProjectAssignmentController extends Controller
      */
     public function assign(AssignProjectRequest $request, Project $project): RedirectResponse
     {
-        $action = $project->status === ProjectStatus::Pending
-            ? ProjectAssignmentAction::Assigned
-            : ProjectAssignmentAction::Reassigned;
-
-        $assignedFrom = $action === ProjectAssignmentAction::Reassigned
-            ? ($request->validated('assigned_from') ?? $project->assignee_id)
-            : null;
-
-        DB::transaction(function () use ($request, $project, $action, $assignedFrom) {
-            $project->update([
-                'assignee_id' => $request->validated('assignee_id'),
-                'status' => ProjectStatus::InProgress,
-            ]);
-
-            $project->assignmentLogs()->create([
-                'action' => $action,
-                'assigned_by' => $request->user()->id,
-                'assigned_from' => $assignedFrom,
-                'assigned_to' => $request->validated('assignee_id'),
-                'note' => $request->validated('note'),
-                'assigned_on' => $request->validated('assigned_on') ?? today(),
-            ]);
-        });
+        DB::transaction(fn () => $this->assignProject(
+            $project,
+            assigneeId: (int) $request->validated('assignee_id'),
+            assignedById: $request->user()->id,
+            assignedFromId: $request->validated('assigned_from'),
+            note: $request->validated('note'),
+            assignedOn: $request->validated('assigned_on'),
+        ));
 
         return redirect()->route('projects.show', $project)
             ->with('status', __('Project assigned successfully.'));
+    }
+
+    /**
+     * Assign or reassign several selected projects to one user at once.
+     */
+    public function bulkAssign(BulkAssignProjectsRequest $request): RedirectResponse
+    {
+        $projects = $request->projects();
+
+        DB::transaction(function () use ($request, $projects) {
+            foreach ($projects as $project) {
+                $this->assignProject(
+                    $project,
+                    assigneeId: (int) $request->validated('assignee_id'),
+                    assignedById: $request->user()->id,
+                    note: $request->validated('note'),
+                    assignedOn: $request->validated('assigned_on'),
+                );
+            }
+        });
+
+        return redirect()->back()
+            ->with('status', trans_choice(':count project assigned successfully.|:count projects assigned successfully.', $projects->count()));
     }
 
     /**
@@ -92,5 +101,41 @@ class ProjectAssignmentController extends Controller
 
         return redirect()->route('projects.show', $project)
             ->with('status', __('Project marked as completed.'));
+    }
+
+    /**
+     * Hand the project to the assignee and record it in the assignment history.
+     * Pending projects are logged as assigned; others as reassigned from the
+     * given user, falling back to the current assignee.
+     */
+    private function assignProject(
+        Project $project,
+        int $assigneeId,
+        int $assignedById,
+        int|string|null $assignedFromId = null,
+        ?string $note = null,
+        ?string $assignedOn = null,
+    ): void {
+        $action = $project->status === ProjectStatus::Pending
+            ? ProjectAssignmentAction::Assigned
+            : ProjectAssignmentAction::Reassigned;
+
+        $assignedFrom = $action === ProjectAssignmentAction::Reassigned
+            ? ($assignedFromId ?? $project->assignee_id)
+            : null;
+
+        $project->update([
+            'assignee_id' => $assigneeId,
+            'status' => ProjectStatus::InProgress,
+        ]);
+
+        $project->assignmentLogs()->create([
+            'action' => $action,
+            'assigned_by' => $assignedById,
+            'assigned_from' => $assignedFrom,
+            'assigned_to' => $assigneeId,
+            'note' => $note,
+            'assigned_on' => $assignedOn ?? today(),
+        ]);
     }
 }

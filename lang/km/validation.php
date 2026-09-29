@@ -159,8 +159,8 @@ return [
     'uuid' => 'វាល :attribute ត្រូវតែជា UUID ត្រឹមត្រូវ។',
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
+        'deca_no' => [
+            'regex' => 'លេខ Deca អាចមានតែអក្សរ លេខ និងសញ្ញា (-) ប៉ុណ្ណោះ។',
         ],
     ],
 
@@ -171,6 +171,7 @@ return [
         'project_code' => 'លេខកូដគម្រោង',
         'year' => 'ឆ្នាំ',
         'work_code' => 'លេខកូដការងារ',
+        'deca_no' => 'លេខ Deca',
         'on_road' => 'ផ្លូវ',
         'start_road' => 'ចំណុចចាប់ផ្តើម',
         'end_road' => 'ចំណុចបញ្ចប់',
@@ -183,6 +184,7 @@ return [
         'project_amount' => 'ចំនួនទឹកប្រាក់គម្រោង',
         'request_number' => 'លេខសំណើ',
         'assignee_id' => 'អ្នកទទួលបន្ទុក',
+        'project_ids' => 'គម្រោង',
         'note' => 'កំណត់ចំណាំ',
         'role' => 'តួនាទី',
     ],

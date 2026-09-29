@@ -23,6 +23,22 @@
         </div>
     </x-slot>
 
+    @php
+        $assignableIds = $projects->filter(fn ($project) => auth()->user()->can('assign', $project))
+            ->map(fn ($project) => (string) $project->id)
+            ->values();
+    @endphp
+
+    <div x-data="{
+            selected: @js(array_map('strval', (array) old('project_ids', []))),
+            assignableIds: @js($assignableIds),
+            get allSelected() {
+                return this.assignableIds.length > 0 && this.assignableIds.every((id) => this.selected.includes(id));
+            },
+            toggleAll() {
+                this.selected = this.allSelected ? [] : [...this.assignableIds];
+            },
+        }">
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
@@ -32,12 +48,28 @@
                 </div>
             @endif
 
+            @if ($errors->bulkAssign->has('project_ids') || $errors->bulkAssign->has('project_ids.*'))
+                <div class="p-4 bg-red-100 dark:bg-red-800/30 text-red-800 dark:text-red-400 rounded-md space-y-1">
+                    @foreach ([...$errors->bulkAssign->get('project_ids'), ...collect($errors->bulkAssign->get('project_ids.*'))->flatten()->unique()] as $message)
+                        <p>{{ $message }}</p>
+                    @endforeach
+                </div>
+            @endif
+
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
                 <form method="GET" action="{{ route('projects.index') }}" class="flex flex-wrap items-end gap-4">
                     <div>
                         <x-input-label for="search" :value="__('Search')" />
                         <x-text-input id="search" name="search" type="text" class="mt-1 block w-56"
-                            value="{{ request('search') }}" placeholder="{{ __('Project code, work code, road...') }}" />
+                            value="{{ request('search') }}" placeholder="{{ __('Project code, work code, Deca No., road...') }}" />
+                    </div>
+
+                    <div>
+                        <x-input-label for="deca_no" :value="__('Deca No.')" />
+                        <x-text-input id="deca_no" name="deca_no" type="text" maxlength="50" pattern="[A-Za-z0-9\-]*" class="mt-1 block w-40"
+                            title="{{ __('Letters, numbers and hyphens (-) only') }}" placeholder="{{ __('e.g. DC-1001') }}"
+                            value="{{ request('deca_no') }}" />
+                        <x-input-error :messages="$errors->get('deca_no')" class="mt-2" />
                     </div>
 
                     <div>
@@ -66,7 +98,7 @@
 
                     <x-secondary-button type="submit">{{ __('Filter') }}</x-secondary-button>
 
-                    @if (request('search') || request('status') || request('assignee_id'))
+                    @if (array_filter(request()->only(['search', 'status', 'assignee_id', 'deca_no'])))
                         <a href="{{ route('projects.index') }}" class="text-sm text-gray-500 dark:text-gray-400 underline">
                             {{ __('Reset') }}
                         </a>
@@ -75,12 +107,32 @@
             </div>
 
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
+                <div x-show="selected.length > 0" style="display: none;"
+                    class="flex flex-wrap items-center gap-3 px-6 py-3 bg-indigo-50 dark:bg-indigo-900/30 border-b border-indigo-100 dark:border-indigo-800">
+                    <span class="text-sm font-medium text-indigo-800 dark:text-indigo-300"
+                        x-text="@js(__(':count selected')).replace(':count', selected.length)"></span>
+                    <x-primary-button type="button" x-on:click="$dispatch('open-modal', 'bulk-assign-projects')">
+                        {{ __('Assign / Reassign Selected') }}
+                    </x-primary-button>
+                    <button type="button" x-on:click="selected = []" class="text-sm text-gray-600 dark:text-gray-400 underline">
+                        {{ __('Clear selection') }}
+                    </button>
+                </div>
+
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-900">
                             <tr>
+                                <th class="ps-6 py-3 w-4">
+                                    @if ($assignableIds->isNotEmpty())
+                                        <input type="checkbox" x-bind:checked="allSelected" x-on:change="toggleAll()"
+                                            aria-label="{{ __('Select all projects on this page') }}"
+                                            class="rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800">
+                                    @endif
+                                </th>
                                 <th class="px-6 py-3 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Project Code') }}</th>
                                 <th class="px-6 py-3 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Work Code') }}</th>
+                                <th class="px-6 py-3 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Deca No.') }}</th>
                                 <th class="px-6 py-3 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Status') }}</th>
                                 <th class="px-6 py-3 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Assignee') }}</th>
                                 <th class="px-6 py-3 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Assigned On') }}</th>
@@ -90,9 +142,17 @@
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             @forelse ($projects as $project)
-                                <tr>
+                                <tr x-bind:class="selected.includes(@js((string) $project->id)) && 'bg-indigo-50/50 dark:bg-indigo-900/20'">
+                                    <td class="ps-6 py-4 w-4">
+                                        @can('assign', $project)
+                                            <input type="checkbox" form="bulk-assign-form" name="project_ids[]" value="{{ $project->id }}" x-model="selected"
+                                                aria-label="{{ __('Select :code', ['code' => $project->project_code]) }}"
+                                                class="rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800">
+                                        @endcan
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ $project->project_code }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ $project->work_code }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ $project->deca_no ?? '—' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $project->status->badgeClass() }}">
                                             {{ $project->status->label() }}
@@ -147,7 +207,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    <td colspan="9" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                         {{ __('No projects found.') }}
                                     </td>
                                 </tr>
@@ -190,5 +250,59 @@
                 </div>
             </form>
         </x-modal>
+    </div>
+
+    <x-modal name="bulk-assign-projects" :show="$errors->bulkAssign->hasAny(['assignee_id', 'assigned_on', 'note'])" focusable>
+        <form id="bulk-assign-form" method="POST" action="{{ route('projects.bulk-assign') }}" class="p-6 space-y-4">
+            @csrf
+
+            <div>
+                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    {{ __('Assign / Reassign Selected') }}
+                </h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400"
+                    x-text="@js(__('The :count selected projects will be assigned to the chosen user. Pending projects are assigned; in-progress projects are reassigned from their current assignee.')).replace(':count', selected.length)"></p>
+            </div>
+
+            <div>
+                <x-input-label for="bulk_assignee_id" :value="__('Assign To')" />
+                <select id="bulk_assignee_id" name="assignee_id" required
+                    class="mt-1 block w-full sm:w-72 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">
+                    <option value="">{{ __('Select a user') }}</option>
+                    @foreach ($assignees as $assignee)
+                        <option value="{{ $assignee->id }}" @selected(old('assignee_id') == $assignee->id && $errors->bulkAssign->isNotEmpty())>
+                            {{ $assignee->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->bulkAssign->get('assignee_id')" class="mt-2" />
+            </div>
+
+            <div>
+                <x-input-label for="bulk_assigned_on" :value="__('Assigned On')" />
+                <x-date-input id="bulk_assigned_on" name="assigned_on" required
+                    :value="old('assigned_on', now()->format('Y-m-d'))"
+                    :max="now()->format('Y-m-d')" />
+                <x-input-error :messages="$errors->bulkAssign->get('assigned_on')" class="mt-2" />
+            </div>
+
+            <div>
+                <x-input-label for="bulk_note" :value="__('Note (optional)')" />
+                <textarea id="bulk_note" name="note" rows="2"
+                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">{{ old('note') }}</textarea>
+                <x-input-error :messages="$errors->bulkAssign->get('note')" class="mt-2" />
+            </div>
+
+            <div class="flex justify-end">
+                <x-secondary-button x-on:click="$dispatch('close')">
+                    {{ __('Cancel') }}
+                </x-secondary-button>
+
+                <x-primary-button class="ms-3" x-bind:disabled="selected.length === 0">
+                    {{ __('Assign') }}
+                </x-primary-button>
+            </div>
+        </form>
+    </x-modal>
     </div>
 </x-app-layout>

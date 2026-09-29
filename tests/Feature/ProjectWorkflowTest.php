@@ -121,6 +121,43 @@ class ProjectWorkflowTest extends TestCase
         $this->assertDatabaseHas('projects', ['project_code' => 'PRJ-0002']);
     }
 
+    public function test_a_project_stores_an_alphanumeric_and_hyphen_deca_number_shown_in_the_project_list(): void
+    {
+        $user = User::factory()->create();
+        $fields = [
+            'project_code' => 'PRJ-DECA',
+            'year' => now()->year,
+            'work_code' => 'WRK-DECA',
+            'on_road' => 'Main St',
+            'start_road' => '1st Ave',
+            'end_road' => '5th Ave',
+            'pipe_type' => 'PVC',
+            'pipe_diameter' => 100,
+            'pipe_length' => 500,
+            'received_date' => now()->toDateString(),
+        ];
+
+        $this->actingAs($user)->get(route('projects.create'))
+            ->assertOk()
+            ->assertSee('name="deca_no"', false)
+            ->assertSee(__('e.g. DC-1001'));
+
+        $this->actingAs($user)->post(route('projects.store'), [...$fields, 'deca_no' => 'DC-01/26'])
+            ->assertSessionHasErrors([
+                'deca_no' => 'The deca no. may only contain letters, numbers and hyphens (-).',
+            ]);
+
+        $this->actingAs($user)->post(route('projects.store'), [...$fields, 'deca_no' => 'DC-0126'])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('projects', ['project_code' => 'PRJ-DECA', 'deca_no' => 'DC-0126']);
+
+        $this->actingAs($user)->get(route('projects.index'))
+            ->assertOk()
+            ->assertSee(__('Deca No.'))
+            ->assertSee('DC-0126');
+    }
+
     public function test_a_regular_user_can_update_their_pending_project_but_only_admins_can_delete_it(): void
     {
         $user = User::factory()->create();

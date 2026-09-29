@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\ProjectAssignmentAction;
+use App\Enums\ProjectStatus;
 use App\Exports\DashboardExport;
 use App\Models\Project;
 use App\Models\User;
@@ -197,5 +198,80 @@ class DashboardTest extends TestCase
                 && $data[1] === [now()->year - 1, $second->name, 1, 0, 0, 1]
                 && $data[2] === ['Total', '', 2, 0, 0, 2];
         });
+    }
+
+    public function test_dashboard_counts_open_a_drill_down_of_the_matching_projects(): void
+    {
+        $viewer = User::factory()->create();
+        $assignee = User::factory()->create(['name' => 'Drill Assignee']);
+        $other = User::factory()->create();
+
+        $recent = Project::factory()->inProgress()->create(['project_code' => 'PRJ-RECENT', 'assignee_id' => $assignee->id, 'year' => 2026, 'deca_no' => 'DC-7']);
+        $this->assignProject($recent, $viewer, $assignee, 2);
+
+        $old = Project::factory()->inProgress()->create(['project_code' => 'PRJ-OLD', 'assignee_id' => $assignee->id, 'year' => 2026]);
+        $this->assignProject($old, $viewer, $assignee, 15);
+
+        $otherYear = Project::factory()->inProgress()->create(['project_code' => 'PRJ-LASTYEAR', 'assignee_id' => $assignee->id, 'year' => 2025]);
+        $this->assignProject($otherYear, $viewer, $assignee, 3);
+
+        $othersProject = Project::factory()->inProgress()->create(['project_code' => 'PRJ-OTHERS', 'assignee_id' => $other->id, 'year' => 2026]);
+        $this->assignProject($othersProject, $viewer, $other, 1);
+
+        $this->actingAs($viewer)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('drillDown(', false)
+            ->assertSee('dashboard-projects', false);
+
+        $this->actingAs($viewer)
+            ->get(route('dashboard.projects', ['bucket' => 'under5', 'year' => 2026, 'assignee_id' => $assignee->id]))
+            ->assertOk()
+            ->assertSee(route('projects.show', $recent), false)
+            ->assertSee('DC-7')
+            ->assertSee('Drill Assignee')
+            ->assertDontSee('PRJ-OLD')
+            ->assertDontSee('PRJ-LASTYEAR')
+            ->assertDontSee('PRJ-OTHERS');
+
+        $this->actingAs($viewer)
+            ->get(route('dashboard.projects', ['bucket' => 'under5']))
+            ->assertOk()
+            ->assertSee('PRJ-RECENT')
+            ->assertSee('PRJ-LASTYEAR')
+            ->assertSee('PRJ-OTHERS')
+            ->assertDontSee('PRJ-OLD');
+
+        $this->actingAs($viewer)
+            ->get(route('dashboard.projects', ['bucket' => 'over10', 'assignee_id' => $assignee->id]))
+            ->assertOk()
+            ->assertSee('PRJ-OLD')
+            ->assertDontSee('PRJ-RECENT');
+    }
+
+    public function test_dashboard_drill_down_reflects_changes_since_the_page_loaded(): void
+    {
+        $viewer = User::factory()->create();
+        $assignee = User::factory()->create();
+
+        $project = Project::factory()->inProgress()->create(['project_code' => 'PRJ-DONE-SINCE', 'assignee_id' => $assignee->id]);
+        $this->assignProject($project, $viewer, $assignee, 1);
+
+        $project->update(['status' => ProjectStatus::Completed, 'completed_at' => now()]);
+
+        $this->actingAs($viewer)
+            ->get(route('dashboard.projects', ['bucket' => 'under5', 'assignee_id' => $assignee->id]))
+            ->assertOk()
+            ->assertDontSee('PRJ-DONE-SINCE')
+            ->assertSee(__('No projects in this range any more.'));
+    }
+
+    public function test_dashboard_drill_down_rejects_an_unknown_bucket(): void
+    {
+        $viewer = User::factory()->create();
+
+        $this->actingAs($viewer)
+            ->getJson(route('dashboard.projects', ['bucket' => 'forever']))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('bucket');
     }
 }

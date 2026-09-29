@@ -71,6 +71,10 @@
                         <dd class="text-gray-900 dark:text-gray-100">{{ $project->work_code }}</dd>
                     </div>
                     <div>
+                        <dt class="text-gray-500 dark:text-gray-400">{{ __('Deca No.') }}</dt>
+                        <dd class="text-gray-900 dark:text-gray-100">{{ $project->deca_no ?? '—' }}</dd>
+                    </div>
+                    <div>
                         <dt class="text-gray-500 dark:text-gray-400">{{ __('On Road') }}</dt>
                         <dd class="text-gray-900 dark:text-gray-100">{{ $project->on_road }}</dd>
                     </div>

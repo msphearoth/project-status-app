@@ -55,14 +55,20 @@ class ProjectController extends Controller
      */
     private function filteredQuery(Request $request): Builder
     {
+        $request->validate([
+            'deca_no' => ['nullable', 'string', 'regex:/^[A-Za-z0-9-]+$/', 'max:50'],
+        ]);
+
         return Project::query()
             ->with(['assignee', 'creator', 'latestAssignmentLog'])
             ->when($request->string('status')->toString(), fn ($query, $status) => $query->where('status', $status))
             ->when($request->integer('assignee_id'), fn ($query, $assigneeId) => $query->where('assignee_id', $assigneeId))
+            ->when($request->string('deca_no')->trim()->toString(), fn ($query, $decaNo) => $query->where('deca_no', 'like', "%{$decaNo}%"))
             ->when($request->string('search')->toString(), function ($query, $search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('project_code', 'like', "%{$search}%")
                         ->orWhere('work_code', 'like', "%{$search}%")
+                        ->orWhere('deca_no', 'like', "%{$search}%")
                         ->orWhere('on_road', 'like', "%{$search}%");
                 });
             });

@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'project_code',
     'year',
     'work_code',
+    'deca_no',
     'on_road',
     'start_road',
     'end_road',

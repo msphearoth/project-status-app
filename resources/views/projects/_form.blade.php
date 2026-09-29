@@ -25,6 +25,14 @@
     </div>
 
     <div>
+        <x-input-label for="deca_no" :value="__('Deca No.')" />
+        <x-text-input id="deca_no" name="deca_no" type="text" maxlength="50" pattern="[A-Za-z0-9\-]*" class="mt-1 block w-full"
+            title="{{ __('Letters, numbers and hyphens (-) only') }}" placeholder="{{ __('e.g. DC-1001') }}"
+            :value="old('deca_no', $project?->deca_no)" />
+        <x-input-error :messages="$errors->get('deca_no')" class="mt-2" />
+    </div>
+
+    <div>
         <x-input-label for="on_road" :value="__('On Road')" />
         <x-text-input id="on_road" name="on_road" type="text" class="mt-1 block w-full"
             :value="old('on_road', $project?->on_road)" required />

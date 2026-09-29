@@ -26,6 +26,7 @@ class ProjectsExportTest extends TestCase
             'project_code' => 'PRJ-EXPORT1',
             'year' => 2025,
             'work_code' => 'WRK-EXPORT1',
+            'deca_no' => 'DECA001',
             'created_by' => $creator->id,
             'assignee_id' => $assignee->id,
         ]);
@@ -49,13 +50,15 @@ class ProjectsExportTest extends TestCase
             $row = $export->array()[0];
 
             return $headings[0] === 'Project Code'
-                && $headings[11] === 'Assignee'
+                && $headings[3] === 'Deca No.'
+                && $headings[12] === 'Assignee'
                 && $row[0] === 'PRJ-EXPORT1'
                 && $row[1] === 2025
                 && $row[2] === 'WRK-EXPORT1'
-                && $row[10] === ProjectStatus::InProgress->label()
-                && $row[11] === $assignee->name
-                && $row[12] === now()->subDays(3)->format('Y-m-d');
+                && $row[3] === 'DECA001'
+                && $row[11] === ProjectStatus::InProgress->label()
+                && $row[12] === $assignee->name
+                && $row[13] === now()->subDays(3)->format('Y-m-d');
         });
     }
 
@@ -95,7 +98,7 @@ class ProjectsExportTest extends TestCase
         Excel::assertDownloaded($filename, function (ProjectsExport $export) {
             $row = $export->array()[0];
 
-            return $row[11] === 'Unassigned' && $row[12] === '';
+            return $row[3] === '' && $row[12] === 'Unassigned' && $row[13] === '';
         });
     }
 }

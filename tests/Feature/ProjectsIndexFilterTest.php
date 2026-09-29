@@ -37,6 +37,31 @@ class ProjectsIndexFilterTest extends TestCase
         $response->assertDontSee('PRJ-SECOND');
     }
 
+    public function test_projects_index_searches_and_filters_by_deca_number(): void
+    {
+        $user = User::factory()->create();
+        Project::factory()->create(['project_code' => 'PRJ-DECA-A', 'deca_no' => 'DC-1001']);
+        Project::factory()->create(['project_code' => 'PRJ-DECA-B', 'deca_no' => 'DC-2002']);
+        Project::factory()->create(['project_code' => 'PRJ-NODECA', 'deca_no' => null]);
+
+        $this->actingAs($user)->get(route('projects.index', ['deca_no' => 'DC-10']))
+            ->assertOk()
+            ->assertSee('PRJ-DECA-A')
+            ->assertDontSee('PRJ-DECA-B')
+            ->assertDontSee('PRJ-NODECA');
+
+        $this->actingAs($user)->get(route('projects.index', ['search' => '2002']))
+            ->assertOk()
+            ->assertSee('PRJ-DECA-B')
+            ->assertDontSee('PRJ-DECA-A');
+
+        $this->actingAs($user)->get(route('projects.index', ['deca_no' => 'DC/10']))
+            ->assertSessionHasErrors('deca_no');
+
+        $this->actingAs($user)->get(route('projects.index'))
+            ->assertSee(__('e.g. DC-1001'));
+    }
+
     public function test_projects_index_shows_row_actions_including_delete_for_admins(): void
     {
         $admin = User::factory()->admin()->create();

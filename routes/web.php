@@ -23,11 +23,13 @@ Route::get('/locale/{locale}', function (string $locale) {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/export', [DashboardController::class, 'export'])->name('dashboard.export');
+    Route::get('/dashboard/projects', [DashboardController::class, 'projects'])->name('dashboard.projects');
 
     Route::get('/projects/export', [ProjectController::class, 'export'])->name('projects.export');
     Route::get('/projects/import', [ProjectImportController::class, 'create'])->name('projects.import.create');
     Route::get('/projects/import/template', [ProjectImportController::class, 'template'])->name('projects.import.template');
     Route::post('/projects/import', [ProjectImportController::class, 'store'])->name('projects.import.store');
+    Route::post('/projects/bulk-assign', [ProjectAssignmentController::class, 'bulkAssign'])->name('projects.bulk-assign');
     Route::resource('projects', ProjectController::class)->except(['destroy']);
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
 

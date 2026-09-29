@@ -181,8 +181,8 @@ return [
     */
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
+        'deca_no' => [
+            'regex' => 'The deca no. may only contain letters, numbers and hyphens (-).',
         ],
     ],
 
@@ -204,6 +204,7 @@ return [
         'project_code' => 'project code',
         'year' => 'year',
         'work_code' => 'work code',
+        'deca_no' => 'deca no.',
         'on_road' => 'road',
         'start_road' => 'start station',
         'end_road' => 'end station',
@@ -216,6 +217,7 @@ return [
         'project_amount' => 'project amount',
         'request_number' => 'request number',
         'assignee_id' => 'assignee',
+        'project_ids' => 'projects',
         'note' => 'note',
         'role' => 'role',
     ],

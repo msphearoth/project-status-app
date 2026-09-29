@@ -30,6 +30,7 @@ class UpdateProjectRequest extends FormRequest
             ],
             'year' => ['required', 'integer', 'digits:4', 'min:2000', 'max:'.(now()->year + 10)],
             'work_code' => ['required', 'string', 'max:255'],
+            'deca_no' => ['nullable', 'string', 'regex:/^[A-Za-z0-9-]+$/', 'max:50'],
             'on_road' => ['required', 'string', 'max:255'],
             'start_road' => ['required', 'string', 'max:255'],
             'end_road' => ['required', 'string', 'max:255'],
