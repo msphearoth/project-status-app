@@ -37,7 +37,7 @@ class ProjectsImportTest extends TestCase
         $this->actingAs($user)->get(route('projects.import.template'))->assertOk();
 
         Excel::assertDownloaded('projects-import-template.xlsx', function (ProjectsImportTemplate $template) {
-            return count($template->headings()) === 10 && $template->array() === [];
+            return count($template->headings()) === 11 && $template->array() === [];
         });
     }
 
@@ -46,9 +46,9 @@ class ProjectsImportTest extends TestCase
         $user = User::factory()->create();
 
         $file = $this->spreadsheet([
-            ['PRJ-IMP1', 2026, 'WRK-1', 'Main St', '1st Ave', '5th Ave', 'PVC', 100, 250.5, ExcelDate::PHPToExcel(new \DateTime('2026-01-15'))],
+            ['PRJ-IMP1', 2026, 'WRK-1', 'DECA-001', 'Main St', '1st Ave', '5th Ave', 'PVC', 100, 250.5, ExcelDate::PHPToExcel(new \DateTime('2026-01-15'))],
             [],
-            ['PRJ-IMP2', '2025', 'WRK-2', 'Second St', 'A', 'B', 'HDPE', '90', '40', '15-Feb-25'],
+            ['PRJ-IMP2', '2025', 'WRK-2', null, 'Second St', 'A', 'B', 'HDPE', '90', '40', '15-Feb-25'],
         ]);
 
         $response = $this->actingAs($user)->post(route('projects.import.store'), ['file' => $file]);
@@ -60,9 +60,11 @@ class ProjectsImportTest extends TestCase
         $this->assertSame($user->id, (int) $first->created_by);
         $this->assertSame('2026-01-15', $first->received_date->toDateString());
         $this->assertSame('250.50', $first->pipe_length);
+        $this->assertSame('DECA-001', $first->deca_no);
 
         $second = Project::firstWhere('project_code', 'PRJ-IMP2');
         $this->assertSame('2025-02-15', $second->received_date->toDateString());
+        $this->assertNull($second->deca_no);
         $this->assertSame(2, Project::count());
     }
 
@@ -72,9 +74,9 @@ class ProjectsImportTest extends TestCase
         Project::factory()->create(['project_code' => 'PRJ-EXISTS']);
 
         $file = $this->spreadsheet([
-            ['PRJ-OK', 2026, 'WRK-1', 'Main St', 'A', 'B', 'PVC', 100, 50, '2026-01-15'],
-            ['PRJ-EXISTS', 2026, 'WRK-2', 'Main St', 'A', 'B', 'PVC', 100, 50, '2026-01-15'],
-            ['PRJ-OK', 2026, 'WRK-3', '', 'A', 'B', 'PVC', 'abc', 50, 'not a date'],
+            ['PRJ-OK', 2026, 'WRK-1', '', 'Main St', 'A', 'B', 'PVC', 100, 50, '2026-01-15'],
+            ['PRJ-EXISTS', 2026, 'WRK-2', '', 'Main St', 'A', 'B', 'PVC', 100, 50, '2026-01-15'],
+            ['PRJ-OK', 2026, 'WRK-3', 'DECA 3', '', 'A', 'B', 'PVC', 'abc', 50, 'not a date'],
         ]);
 
         $response = $this->actingAs($user)
@@ -85,6 +87,7 @@ class ProjectsImportTest extends TestCase
 
         $response->assertSessionHasErrors(['file' => 'Row 3: The project code has already been taken.']);
         $response->assertSessionHasErrors(['file' => 'Row 4: The road field is required.']);
+        $response->assertSessionHasErrors(['file' => 'Row 4: The deca no. may only contain letters, numbers and hyphens (-).']);
         $response->assertSessionHasErrors(['file' => 'Row 4: The pipe diameter field must be a number.']);
         $response->assertSessionHasErrors(['file' => 'Row 4: The project code PRJ-OK already appears in row 2.']);
         $this->assertDatabaseMissing('projects', ['project_code' => 'PRJ-OK']);

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectAssignmentController;
 use App\Http\Controllers\ProjectController;
@@ -30,6 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/projects/import/template', [ProjectImportController::class, 'template'])->name('projects.import.template');
     Route::post('/projects/import', [ProjectImportController::class, 'store'])->name('projects.import.store');
     Route::post('/projects/bulk-assign', [ProjectAssignmentController::class, 'bulkAssign'])->name('projects.bulk-assign');
+    Route::delete('/projects/bulk-delete', [ProjectController::class, 'bulkDestroy'])->name('projects.bulk-destroy');
     Route::resource('projects', ProjectController::class)->except(['destroy']);
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
 
@@ -38,6 +40,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/projects/{project}/complete', [ProjectAssignmentController::class, 'complete'])->name('projects.complete');
 
     Route::resource('users', UserController::class)->except(['show']);
+
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::get('/notifications/{notification}', [NotificationController::class, 'open'])->name('notifications.open');
 });
 
 Route::middleware('auth')->group(function () {

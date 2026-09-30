@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ProjectsExport;
+use App\Http\Requests\BulkDeleteProjectsRequest;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
@@ -10,6 +11,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -147,5 +149,18 @@ class ProjectController extends Controller
 
         return redirect()->route('projects.index')
             ->with('status', __('Project deleted successfully.'));
+    }
+
+    /**
+     * Delete several selected projects at once, together with their assignment history.
+     */
+    public function bulkDestroy(BulkDeleteProjectsRequest $request): RedirectResponse
+    {
+        $projects = $request->projects();
+
+        DB::transaction(fn () => $projects->each->delete());
+
+        return redirect()->back()
+            ->with('status', trans_choice(':count project deleted successfully.|:count projects deleted successfully.', $projects->count()));
     }
 }

@@ -30,6 +30,7 @@ class ProjectsImport implements ToCollection, WithStartRow
         'project_code',
         'year',
         'work_code',
+        'deca_no',
         'on_road',
         'start_road',
         'end_road',
@@ -139,7 +140,7 @@ class ProjectsImport implements ToCollection, WithStartRow
             $attributes[$column] = is_string($value) ? trim($value) : $value;
         }
 
-        foreach (['project_code', 'work_code', 'on_road', 'start_road', 'end_road', 'pipe_type'] as $column) {
+        foreach (['project_code', 'work_code', 'deca_no', 'on_road', 'start_road', 'end_road', 'pipe_type'] as $column) {
             if (is_int($attributes[$column]) || is_float($attributes[$column])) {
                 $attributes[$column] = (string) $attributes[$column];
             }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProjectStatus;
+use App\Notifications\ProjectAssigned;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Notifications\DatabaseNotification;
 
 #[Fillable([
     'project_code',
@@ -34,6 +36,20 @@ class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
     use HasFactory;
+
+    /**
+     * Remove the assignment notifications of deleted projects so they no
+     * longer appear in the notification bell.
+     */
+    protected static function booted(): void
+    {
+        static::deleted(function (Project $project): void {
+            DatabaseNotification::query()
+                ->where('type', ProjectAssigned::class)
+                ->where('data->project_id', $project->id)
+                ->delete();
+        });
+    }
 
     /**
      * @return array<string, string>

@@ -177,5 +177,14 @@
     "You are not allowed to assign: :codes.": "អ្នកមិនមានសិទ្ធិចាត់តាំង៖ :codes។",
     "Already assigned to the selected user: :codes.": "បានចាត់តាំងទៅអ្នកប្រើប្រាស់ដែលបានជ្រើសរើសរួចហើយ៖ :codes។",
     "The assigned date cannot be before the received date of: :codes.": "កាលបរិច្ឆេទចាត់តាំងមិនអាចមុនកាលបរិច្ឆេទទទួលរបស់៖ :codes។",
-    "This project is assigned to :name. Only the assignee or an admin can update, reassign or complete it.": "គម្រោងនេះត្រូវបានចាត់តាំងទៅ :name។ មានតែអ្នកទទួលខុសត្រូវ ឬអ្នកគ្រប់គ្រងប៉ុណ្ណោះដែលអាចកែប្រែ ចាត់តាំងឡើងវិញ ឬបញ្ចប់វាបាន។"
+    "This project is assigned to :name. Only the assignee or an admin can update, reassign or complete it.": "គម្រោងនេះត្រូវបានចាត់តាំងទៅ :name។ មានតែអ្នកទទួលខុសត្រូវ ឬអ្នកគ្រប់គ្រងប៉ុណ្ណោះដែលអាចកែប្រែ ចាត់តាំងឡើងវិញ ឬបញ្ចប់វាបាន។",
+    "Notifications": "ការជូនដំណឹង",
+    "Mark all as read": "សម្គាល់ថាបានអានទាំងអស់",
+    ":name assigned project :code to you.": ":name បានចាត់តាំងគម្រោង :code ឱ្យអ្នក។",
+    "No new notifications.": "មិនមានការជូនដំណឹងថ្មីទេ។",
+    "Delete Selected": "លុបគម្រោងដែលបានជ្រើសរើស",
+    "Are you sure you want to delete the :count selected projects?": "តើអ្នកប្រាកដថាចង់លុបគម្រោងចំនួន :count ដែលបានជ្រើសរើសមែនទេ?",
+    "This action cannot be undone. All assignment history for these projects will also be deleted.": "សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។ ប្រវត្តិនៃការចាត់តាំងទាំងអស់សម្រាប់គម្រោងទាំងនេះក៏នឹងត្រូវលុបផងដែរ។",
+    ":count project deleted successfully.|:count projects deleted successfully.": "លុបគម្រោងចំនួន :count បានជោគជ័យ។|លុបគម្រោងចំនួន :count បានជោគជ័យ។",
+    "You are not allowed to delete: :codes.": "អ្នកមិនមានសិទ្ធិលុប៖ :codes។"
 }

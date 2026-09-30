@@ -8,6 +8,8 @@ use App\Http\Requests\AssignProjectRequest;
 use App\Http\Requests\BulkAssignProjectsRequest;
 use App\Http\Requests\CompleteProjectRequest;
 use App\Models\Project;
+use App\Models\User;
+use App\Notifications\ProjectAssigned;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,8 +23,8 @@ class ProjectAssignmentController extends Controller
     {
         DB::transaction(fn () => $this->assignProject(
             $project,
-            assigneeId: (int) $request->validated('assignee_id'),
-            assignedById: $request->user()->id,
+            assignee: User::findOrFail($request->validated('assignee_id')),
+            assignedBy: $request->user(),
             assignedFromId: $request->validated('assigned_from'),
             note: $request->validated('note'),
             assignedOn: $request->validated('assigned_on'),
@@ -38,13 +40,14 @@ class ProjectAssignmentController extends Controller
     public function bulkAssign(BulkAssignProjectsRequest $request): RedirectResponse
     {
         $projects = $request->projects();
+        $assignee = User::findOrFail($request->validated('assignee_id'));
 
-        DB::transaction(function () use ($request, $projects) {
+        DB::transaction(function () use ($request, $projects, $assignee) {
             foreach ($projects as $project) {
                 $this->assignProject(
                     $project,
-                    assigneeId: (int) $request->validated('assignee_id'),
-                    assignedById: $request->user()->id,
+                    assignee: $assignee,
+                    assignedBy: $request->user(),
                     note: $request->validated('note'),
                     assignedOn: $request->validated('assigned_on'),
                 );
@@ -106,12 +109,13 @@ class ProjectAssignmentController extends Controller
     /**
      * Hand the project to the assignee and record it in the assignment history.
      * Pending projects are logged as assigned; others as reassigned from the
-     * given user, falling back to the current assignee.
+     * given user, falling back to the current assignee. The assignee is
+     * notified unless they assigned the project to themselves.
      */
     private function assignProject(
         Project $project,
-        int $assigneeId,
-        int $assignedById,
+        User $assignee,
+        User $assignedBy,
         int|string|null $assignedFromId = null,
         ?string $note = null,
         ?string $assignedOn = null,
@@ -125,17 +129,21 @@ class ProjectAssignmentController extends Controller
             : null;
 
         $project->update([
-            'assignee_id' => $assigneeId,
+            'assignee_id' => $assignee->id,
             'status' => ProjectStatus::InProgress,
         ]);
 
         $project->assignmentLogs()->create([
             'action' => $action,
-            'assigned_by' => $assignedById,
+            'assigned_by' => $assignedBy->id,
             'assigned_from' => $assignedFrom,
-            'assigned_to' => $assigneeId,
+            'assigned_to' => $assignee->id,
             'note' => $note,
             'assigned_on' => $assignedOn ?? today(),
         ]);
+
+        if ($assignee->isNot($assignedBy)) {
+            $assignee->notify(new ProjectAssigned($project, $assignedBy));
+        }
     }
 }

@@ -149,7 +149,7 @@ class ProjectBulkAssignTest extends TestCase
         $this->actingAs($user)->get(route('projects.index'))
             ->assertOk()
             ->assertSee('id="bulk-assign-form"', false)
-            ->assertSee('name="project_ids[]" value="'.$pending->id.'"', false)
-            ->assertDontSee('name="project_ids[]" value="'.$othersProject->id.'"', false);
+            ->assertSee('value="'.$pending->id.'" x-model="selected"', false)
+            ->assertDontSee('value="'.$othersProject->id.'" x-model="selected"', false);
     }
 }

@@ -24,19 +24,31 @@
     </x-slot>
 
     @php
-        $assignableIds = $projects->filter(fn ($project) => auth()->user()->can('assign', $project))
+        $assignableIds = $projects->filter(fn ($project) => auth()->user()->can('assign', $project))->toBase()
             ->map(fn ($project) => (string) $project->id)
             ->values();
+        $deletableIds = $projects->filter(fn ($project) => auth()->user()->can('delete', $project))->toBase()
+            ->map(fn ($project) => (string) $project->id)
+            ->values();
+        $selectableIds = $assignableIds->merge($deletableIds)->unique()->values();
     @endphp
 
     <div x-data="{
             selected: @js(array_map('strval', (array) old('project_ids', []))),
             assignableIds: @js($assignableIds),
+            deletableIds: @js($deletableIds),
+            selectableIds: @js($selectableIds),
+            get assignableSelected() {
+                return this.selected.filter((id) => this.assignableIds.includes(id));
+            },
+            get deletableSelected() {
+                return this.selected.filter((id) => this.deletableIds.includes(id));
+            },
             get allSelected() {
-                return this.assignableIds.length > 0 && this.assignableIds.every((id) => this.selected.includes(id));
+                return this.selectableIds.length > 0 && this.selectableIds.every((id) => this.selected.includes(id));
             },
             toggleAll() {
-                this.selected = this.allSelected ? [] : [...this.assignableIds];
+                this.selected = this.allSelected ? [] : [...this.selectableIds];
             },
         }">
     <div class="py-12">
@@ -48,13 +60,15 @@
                 </div>
             @endif
 
-            @if ($errors->bulkAssign->has('project_ids') || $errors->bulkAssign->has('project_ids.*'))
-                <div class="p-4 bg-red-100 dark:bg-red-800/30 text-red-800 dark:text-red-400 rounded-md space-y-1">
-                    @foreach ([...$errors->bulkAssign->get('project_ids'), ...collect($errors->bulkAssign->get('project_ids.*'))->flatten()->unique()] as $message)
-                        <p>{{ $message }}</p>
-                    @endforeach
-                </div>
-            @endif
+            @foreach ([$errors->bulkAssign, $errors->bulkDelete] as $bulkErrors)
+                @if ($bulkErrors->has('project_ids') || $bulkErrors->has('project_ids.*'))
+                    <div class="p-4 bg-red-100 dark:bg-red-800/30 text-red-800 dark:text-red-400 rounded-md space-y-1">
+                        @foreach ([...$bulkErrors->get('project_ids'), ...collect($bulkErrors->get('project_ids.*'))->flatten()->unique()] as $message)
+                            <p>{{ $message }}</p>
+                        @endforeach
+                    </div>
+                @endif
+            @endforeach
 
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
                 <form method="GET" action="{{ route('projects.index') }}" class="flex flex-wrap items-end gap-4">
@@ -111,9 +125,14 @@
                     class="flex flex-wrap items-center gap-3 px-6 py-3 bg-indigo-50 dark:bg-indigo-900/30 border-b border-indigo-100 dark:border-indigo-800">
                     <span class="text-sm font-medium text-indigo-800 dark:text-indigo-300"
                         x-text="@js(__(':count selected')).replace(':count', selected.length)"></span>
-                    <x-primary-button type="button" x-on:click="$dispatch('open-modal', 'bulk-assign-projects')">
+                    <x-primary-button type="button" x-show="assignableSelected.length > 0" x-on:click="$dispatch('open-modal', 'bulk-assign-projects')">
                         {{ __('Assign / Reassign Selected') }}
                     </x-primary-button>
+                    @if ($deletableIds->isNotEmpty())
+                        <x-danger-button type="button" x-show="deletableSelected.length > 0" x-on:click="$dispatch('open-modal', 'bulk-delete-projects')">
+                            {{ __('Delete Selected') }}
+                        </x-danger-button>
+                    @endif
                     <button type="button" x-on:click="selected = []" class="text-sm text-gray-600 dark:text-gray-400 underline">
                         {{ __('Clear selection') }}
                     </button>
@@ -124,7 +143,7 @@
                         <thead class="bg-gray-50 dark:bg-gray-900">
                             <tr>
                                 <th class="ps-6 py-3 w-4">
-                                    @if ($assignableIds->isNotEmpty())
+                                    @if ($selectableIds->isNotEmpty())
                                         <input type="checkbox" x-bind:checked="allSelected" x-on:change="toggleAll()"
                                             aria-label="{{ __('Select all projects on this page') }}"
                                             class="rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800">
@@ -144,11 +163,11 @@
                             @forelse ($projects as $project)
                                 <tr x-bind:class="selected.includes(@js((string) $project->id)) && 'bg-indigo-50/50 dark:bg-indigo-900/20'">
                                     <td class="ps-6 py-4 w-4">
-                                        @can('assign', $project)
-                                            <input type="checkbox" form="bulk-assign-form" name="project_ids[]" value="{{ $project->id }}" x-model="selected"
+                                        @if ($selectableIds->contains((string) $project->id))
+                                            <input type="checkbox" value="{{ $project->id }}" x-model="selected"
                                                 aria-label="{{ __('Select :code', ['code' => $project->project_code]) }}"
                                                 class="rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800">
-                                        @endcan
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ $project->project_code }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ $project->work_code }}</td>
@@ -256,12 +275,16 @@
         <form id="bulk-assign-form" method="POST" action="{{ route('projects.bulk-assign') }}" class="p-6 space-y-4">
             @csrf
 
+            <template x-for="id in assignableSelected" :key="id">
+                <input type="hidden" name="project_ids[]" x-bind:value="id">
+            </template>
+
             <div>
                 <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
                     {{ __('Assign / Reassign Selected') }}
                 </h2>
                 <p class="mt-1 text-sm text-gray-600 dark:text-gray-400"
-                    x-text="@js(__('The :count selected projects will be assigned to the chosen user. Pending projects are assigned; in-progress projects are reassigned from their current assignee.')).replace(':count', selected.length)"></p>
+                    x-text="@js(__('The :count selected projects will be assigned to the chosen user. Pending projects are assigned; in-progress projects are reassigned from their current assignee.')).replace(':count', assignableSelected.length)"></p>
             </div>
 
             <div>
@@ -298,11 +321,41 @@
                     {{ __('Cancel') }}
                 </x-secondary-button>
 
-                <x-primary-button class="ms-3" x-bind:disabled="selected.length === 0">
+                <x-primary-button class="ms-3" x-bind:disabled="assignableSelected.length === 0">
                     {{ __('Assign') }}
                 </x-primary-button>
             </div>
         </form>
     </x-modal>
+
+    @if ($deletableIds->isNotEmpty())
+    <x-modal name="bulk-delete-projects" focusable>
+        <form method="POST" action="{{ route('projects.bulk-destroy') }}" class="p-6">
+            @csrf
+            @method('DELETE')
+
+            <template x-for="id in deletableSelected" :key="id">
+                <input type="hidden" name="project_ids[]" x-bind:value="id">
+            </template>
+
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100"
+                x-text="@js(__('Are you sure you want to delete the :count selected projects?')).replace(':count', deletableSelected.length)"></h2>
+
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                {{ __('This action cannot be undone. All assignment history for these projects will also be deleted.') }}
+            </p>
+
+            <div class="mt-6 flex justify-end">
+                <x-secondary-button x-on:click="$dispatch('close')">
+                    {{ __('Cancel') }}
+                </x-secondary-button>
+
+                <x-danger-button class="ms-3" x-bind:disabled="deletableSelected.length === 0">
+                    {{ __('Delete') }}
+                </x-danger-button>
+            </div>
+        </form>
+    </x-modal>
+    @endif
     </div>
 </x-app-layout>
