@@ -30,6 +30,7 @@ class ProjectBulkAssignTest extends TestCase
                 'assignee_id' => $newAssignee->id,
                 'assigned_on' => today()->subDays(2)->toDateString(),
                 'note' => 'Batch handover',
+                'deca_no' => 'DC-500',
             ])
             ->assertRedirect(route('projects.index'))
             ->assertSessionHas('status', '2 projects assigned successfully.');
@@ -38,6 +39,7 @@ class ProjectBulkAssignTest extends TestCase
             $project->refresh();
             $this->assertSame(ProjectStatus::InProgress, $project->status);
             $this->assertSame($newAssignee->id, $project->assignee_id);
+            $this->assertSame('DC-500', $project->deca_no);
             $this->assertSame(today()->subDays(2)->toDateString(), $project->latestAssignmentLog->assigned_on->toDateString());
         }
 
@@ -48,12 +50,14 @@ class ProjectBulkAssignTest extends TestCase
             'assigned_from' => null,
             'assigned_to' => $newAssignee->id,
             'note' => 'Batch handover',
+            'deca_no' => 'DC-500',
         ]);
         $this->assertDatabaseHas('project_assignment_logs', [
             'project_id' => $inProgress->id,
             'action' => 'REASSIGNED',
             'assigned_from' => $previousAssignee->id,
             'assigned_to' => $newAssignee->id,
+            'deca_no' => 'DC-500',
         ]);
     }
 

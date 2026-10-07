@@ -20,9 +20,9 @@ enum ProjectStatus: string
     public function badgeClass(): string
     {
         return match ($this) {
-            self::Pending => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-400',
-            self::InProgress => 'bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-400',
-            self::Completed => 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-400',
+            self::Pending => 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
+            self::InProgress => 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20',
+            self::Completed => 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
         };
     }
 }

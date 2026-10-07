@@ -24,12 +24,20 @@ class DashboardController extends Controller
     /**
      * Display the dashboard: in-progress projects grouped by year and then
      * by their current assignee, broken down by how many days it's been
-     * since they were assigned.
+     * since they were assigned, plus the project count for each status.
      */
     public function index(): View
     {
+        $countsByStatus = Project::query()
+            ->toBase()
+            ->selectRaw('status, count(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
         return view('dashboard', [
             'rows' => $this->buildRows(),
+            'statusCounts' => collect(ProjectStatus::cases())
+                ->mapWithKeys(fn (ProjectStatus $status) => [$status->value => (int) ($countsByStatus[$status->value] ?? 0)]),
         ]);
     }
 

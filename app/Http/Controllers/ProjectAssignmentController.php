@@ -27,6 +27,7 @@ class ProjectAssignmentController extends Controller
             assignedBy: $request->user(),
             assignedFromId: $request->validated('assigned_from'),
             note: $request->validated('note'),
+            decaNo: $request->validated('deca_no'),
             assignedOn: $request->validated('assigned_on'),
         ));
 
@@ -49,6 +50,7 @@ class ProjectAssignmentController extends Controller
                     assignee: $assignee,
                     assignedBy: $request->user(),
                     note: $request->validated('note'),
+                    decaNo: $request->validated('deca_no'),
                     assignedOn: $request->validated('assigned_on'),
                 );
             }
@@ -110,7 +112,8 @@ class ProjectAssignmentController extends Controller
      * Hand the project to the assignee and record it in the assignment history.
      * Pending projects are logged as assigned; others as reassigned from the
      * given user, falling back to the current assignee. The assignee is
-     * notified unless they assigned the project to themselves.
+     * notified unless they assigned the project to themselves. A given Deca No.
+     * also replaces the project's own, while a blank one leaves it unchanged.
      */
     private function assignProject(
         Project $project,
@@ -118,6 +121,7 @@ class ProjectAssignmentController extends Controller
         User $assignedBy,
         int|string|null $assignedFromId = null,
         ?string $note = null,
+        ?string $decaNo = null,
         ?string $assignedOn = null,
     ): void {
         $action = $project->status === ProjectStatus::Pending
@@ -131,6 +135,7 @@ class ProjectAssignmentController extends Controller
         $project->update([
             'assignee_id' => $assignee->id,
             'status' => ProjectStatus::InProgress,
+            'deca_no' => $decaNo ?? $project->deca_no,
         ]);
 
         $project->assignmentLogs()->create([
@@ -139,6 +144,7 @@ class ProjectAssignmentController extends Controller
             'assigned_from' => $assignedFrom,
             'assigned_to' => $assignee->id,
             'note' => $note,
+            'deca_no' => $decaNo,
             'assigned_on' => $assignedOn ?? today(),
         ]);
 

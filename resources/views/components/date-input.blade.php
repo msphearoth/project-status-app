@@ -90,11 +90,11 @@
         <input id="{{ $id }}" type="text" autocomplete="off"
             x-ref="text" placeholder="DD-MMM-YY" x-model="displayValue" x-on:blur="normalize()" x-on:keydown.enter="normalize()"
             @required($required)
-            {{ $attributes->merge(['class' => 'block w-full rounded-s-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 shadow-sm']) }}
+            {{ $attributes->merge(['class' => 'block w-full rounded-s-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-indigo-500 dark:focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-indigo-500 shadow-sm sm:text-sm']) }}
             x-bind:class="invalid && 'border-red-500 dark:border-red-500'">
 
         <button type="button" x-on:click="openPicker()" title="{{ __('Pick a date') }}" aria-label="{{ __('Pick a date') }}"
-            class="inline-flex items-center px-3 -ms-px rounded-e-md border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            class="inline-flex items-center px-3 -ms-px rounded-e-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
             </svg>
@@ -111,7 +111,7 @@
         <div class="mt-2 flex flex-wrap gap-2">
             @foreach ([0 => __('Today'), 1 => __('Yesterday')] as $days => $label)
                 <button type="button" x-on:click="setDaysAgo({{ $days }})"
-                    class="px-2.5 py-1 text-xs rounded-md border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    class="px-2.5 py-1 text-xs font-medium rounded-full border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     x-bind:class="isoValue === daysAgo({{ $days }}) && 'bg-indigo-50 border-indigo-400 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300'">
                     {{ $label }}
                 </button>

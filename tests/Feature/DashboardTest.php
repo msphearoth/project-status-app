@@ -28,6 +28,22 @@ class DashboardTest extends TestCase
         $this->travelBack();
     }
 
+    public function test_dashboard_counts_projects_by_status(): void
+    {
+        $viewer = User::factory()->create();
+        Project::factory()->count(3)->create();
+        Project::factory()->count(2)->inProgress()->create();
+        Project::factory()->completed()->create();
+
+        $this->actingAs($viewer)->get(route('dashboard'))
+            ->assertOk()
+            ->assertViewHas('statusCounts', fn ($statusCounts) => $statusCounts->all() === [
+                ProjectStatus::Pending->value => 3,
+                ProjectStatus::InProgress->value => 2,
+                ProjectStatus::Completed->value => 1,
+            ]);
+    }
+
     public function test_dashboard_buckets_in_progress_projects_by_days_since_assignment(): void
     {
         $viewer = User::factory()->create();

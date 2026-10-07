@@ -247,6 +247,71 @@ class ProjectWorkflowTest extends TestCase
         $this->assertSame(today()->subDays(3)->toDateString(), $log->assignedDate()->toDateString());
     }
 
+    public function test_assigning_and_reassigning_a_project_stores_the_deca_number_in_the_history(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $firstAssignee = User::factory()->create();
+        $secondAssignee = User::factory()->create();
+        $project = Project::factory()->create([
+            'created_by' => $admin->id,
+            'received_date' => today()->subDays(10),
+        ]);
+
+        $this->actingAs($admin)->post(route('projects.assign', $project), [
+            'assignee_id' => $firstAssignee->id,
+            'deca_no' => 'DC-1001',
+        ])->assertRedirect(route('projects.show', $project));
+
+        $this->actingAs($admin)->post(route('projects.assign', $project), [
+            'assigned_from' => $firstAssignee->id,
+            'assignee_id' => $secondAssignee->id,
+            'deca_no' => '  DC-1002  ',
+        ])->assertRedirect(route('projects.show', $project));
+
+        $this->assertSame(['DC-1001', 'DC-1002'], $project->assignmentLogs()->orderBy('id')->pluck('deca_no')->all());
+        $this->assertSame('DC-1002', $project->fresh()->deca_no);
+
+        $this->actingAs($admin)->get(route('projects.show', $project))
+            ->assertOk()
+            ->assertSee('DC-1001')
+            ->assertSee('DC-1002');
+    }
+
+    public function test_reassigning_without_a_deca_number_keeps_the_projects_deca_number(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $previousAssignee = User::factory()->create();
+        $newAssignee = User::factory()->create();
+        $project = Project::factory()->inProgress()->create([
+            'assignee_id' => $previousAssignee->id,
+            'deca_no' => 'DC-777',
+        ]);
+
+        $this->actingAs($admin)->post(route('projects.assign', $project), [
+            'assignee_id' => $newAssignee->id,
+            'deca_no' => '',
+        ])->assertRedirect(route('projects.show', $project));
+
+        $this->assertSame('DC-777', $project->fresh()->deca_no);
+        $this->assertNull($project->fresh()->latestAssignmentLog->deca_no);
+    }
+
+    public function test_assignment_deca_number_must_only_contain_letters_numbers_and_hyphens(): void
+    {
+        $user = User::factory()->create();
+        $assignee = User::factory()->create();
+        $project = Project::factory()->create(['created_by' => $user->id]);
+
+        foreach (['DC 1001', 'DC/1001', str_repeat('A', 51)] as $invalidDecaNo) {
+            $this->actingAs($user)->post(route('projects.assign', $project), [
+                'assignee_id' => $assignee->id,
+                'deca_no' => $invalidDecaNo,
+            ])->assertSessionHasErrors('deca_no');
+        }
+
+        $this->assertDatabaseCount('project_assignment_logs', 0);
+    }
+
     public function test_assigned_date_cannot_be_in_the_future_or_before_the_received_date(): void
     {
         $user = User::factory()->create();

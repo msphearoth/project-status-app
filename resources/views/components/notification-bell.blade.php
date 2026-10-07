@@ -5,7 +5,7 @@
 
 <x-dropdown align="right" width="w-80">
     <x-slot name="trigger">
-        <button type="button" class="relative inline-flex items-center p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150" aria-label="{{ __('Notifications') }}">
+        <button type="button" class="relative inline-flex items-center p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150" aria-label="{{ __('Notifications') }}">
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
             </svg>
@@ -33,7 +33,7 @@
         </div>
 
         @forelse ($notifications as $notification)
-            <a href="{{ route('notifications.open', $notification->id) }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+            <a href="{{ route('notifications.open', $notification->id) }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700/60 transition duration-150 ease-in-out">
                 <div>
                     {{ __(':name assigned project :code to you.', [
                         'name' => $notification->data['assigned_by_name'],

@@ -46,6 +46,7 @@ class BulkAssignProjectsRequest extends FormRequest
             'project_ids.*' => ['integer', 'distinct', Rule::exists('projects', 'id')],
             'assignee_id' => ['required', Rule::exists('users', 'id')],
             'note' => ['nullable', 'string', 'max:1000'],
+            'deca_no' => ['nullable', 'string', 'regex:/^[A-Za-z0-9-]+$/', 'max:50'],
             'assigned_on' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
         ];
     }

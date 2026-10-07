@@ -31,6 +31,7 @@ class AssignProjectRequest extends FormRequest
             ],
             'assigned_from' => ['nullable', Rule::exists('users', 'id'), 'different:assignee_id'],
             'note' => ['nullable', 'string', 'max:1000'],
+            'deca_no' => ['nullable', 'string', 'regex:/^[A-Za-z0-9-]+$/', 'max:50'],
             'assigned_on' => [
                 'nullable',
                 'date_format:Y-m-d',

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
-#[Fillable(['project_id', 'action', 'assigned_by', 'assigned_from', 'assigned_to', 'note', 'assigned_on'])]
+#[Fillable(['project_id', 'action', 'assigned_by', 'assigned_from', 'assigned_to', 'note', 'deca_no', 'assigned_on'])]
 class ProjectAssignmentLog extends Model
 {
     public const UPDATED_AT = null;
