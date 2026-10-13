@@ -31,6 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/projects/import/template', [ProjectImportController::class, 'template'])->name('projects.import.template');
     Route::post('/projects/import', [ProjectImportController::class, 'store'])->name('projects.import.store');
     Route::post('/projects/bulk-assign', [ProjectAssignmentController::class, 'bulkAssign'])->name('projects.bulk-assign');
+    Route::post('/projects/bulk-complete', [ProjectAssignmentController::class, 'bulkComplete'])->name('projects.bulk-complete');
     Route::delete('/projects/bulk-delete', [ProjectController::class, 'bulkDestroy'])->name('projects.bulk-destroy');
     Route::resource('projects', ProjectController::class)->except(['destroy']);
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');

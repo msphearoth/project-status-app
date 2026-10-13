@@ -23,7 +23,6 @@ class CompleteProjectRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'project_amount' => ['required', 'numeric', 'min:0'],
             'request_number' => ['required', 'string', 'max:255'],
         ];
     }

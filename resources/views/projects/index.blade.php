@@ -31,7 +31,10 @@
         $deletableIds = $projects->filter(fn ($project) => auth()->user()->can('delete', $project))->toBase()
             ->map(fn ($project) => (string) $project->id)
             ->values();
-        $selectableIds = $assignableIds->merge($deletableIds)->unique()->values();
+        $completableIds = $projects->filter(fn ($project) => auth()->user()->can('complete', $project))->toBase()
+            ->map(fn ($project) => (string) $project->id)
+            ->values();
+        $selectableIds = $assignableIds->merge($deletableIds)->merge($completableIds)->unique()->values();
         $hasFilters = (bool) array_filter(request()->only(['search', 'status', 'assignee_id', 'deca_no']));
         $statusTabs = ['' => __('All')] + collect(\App\Enums\ProjectStatus::cases())->mapWithKeys(fn ($status) => [$status->value => $status->label()])->all();
         $checkboxClasses = 'h-4 w-4 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-900 text-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800';
@@ -41,7 +44,49 @@
             selected: @js(array_map('strval', (array) old('project_ids', []))),
             assignableIds: @js($assignableIds),
             deletableIds: @js($deletableIds),
+            completableIds: @js($completableIds),
             selectableIds: @js($selectableIds),
+            completing: false,
+            completeErrors: [],
+            requestNumber: '',
+            get hasMultipleSelected() {
+                return this.selected.length >= 2;
+            },
+            get completableSelected() {
+                return this.selected.filter((id) => this.completableIds.includes(id));
+            },
+            async bulkComplete() {
+                this.completing = true;
+                this.completeErrors = [];
+
+                try {
+                    const response = await fetch(@js(route('projects.bulk-complete')), {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                        },
+                        body: JSON.stringify({ project_ids: this.completableSelected, request_number: this.requestNumber.trim() }),
+                    });
+
+                    if (response.ok) {
+                        window.location.reload();
+                        return;
+                    }
+
+                    const data = response.status === 422 ? await response.json() : {};
+                    this.completeErrors = Object.values(data.errors ?? {}).flat();
+                    if (this.completeErrors.length === 0) {
+                        this.completeErrors = [@js(__('Something went wrong. Please try again.'))];
+                    }
+                } catch (error) {
+                    this.completeErrors = [@js(__('Something went wrong. Please try again.'))];
+                }
+
+                this.completing = false;
+            },
             get assignableSelected() {
                 return this.selected.filter((id) => this.assignableIds.includes(id));
             },
@@ -161,7 +206,16 @@
                     </template>
 
                     <div x-show="selected.length > 0" style="display: none;" class="flex flex-wrap items-center gap-2 sm:ms-auto">
-                        <x-primary-button type="button" x-show="assignableSelected.length > 0" x-on:click="$dispatch('open-modal', 'bulk-assign-projects')">
+                        @if ($completableIds->isNotEmpty())
+                            <x-primary-button type="button" x-show="hasMultipleSelected && completableSelected.length > 0" style="display: none;"
+                                x-on:click="completeErrors = []; requestNumber = ''; $dispatch('open-modal', 'bulk-complete-projects')"
+                                class="!bg-emerald-600 hover:!bg-emerald-500 active:!bg-emerald-700 focus-visible:!ring-emerald-500">
+                                <x-icon name="check-circle" class="h-4 w-4" />
+                                {{ __('Bulk Complete') }}
+                                <span x-text="'(' + completableSelected.length + ')'"></span>
+                            </x-primary-button>
+                        @endif
+                        <x-primary-button type="button" x-show="hasMultipleSelected && assignableSelected.length > 0" style="display: none;" x-on:click="$dispatch('open-modal', 'bulk-assign-projects')">
                             <x-icon name="arrows-right-left" class="h-4 w-4" />
                             {{ __('Assign / Reassign Selected') }}
                         </x-primary-button>
@@ -464,6 +518,52 @@
                 <x-danger-button x-bind:disabled="deletableSelected.length === 0">
                     {{ __('Delete') }}
                 </x-danger-button>
+            </div>
+        </form>
+    </x-modal>
+    @endif
+
+    @if ($completableIds->isNotEmpty())
+    <x-modal name="bulk-complete-projects" maxWidth="lg" focusable>
+        <form x-on:submit.prevent="bulkComplete()">
+            <div class="flex gap-4 p-6">
+                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                    <x-icon name="check-circle" class="h-6 w-6" />
+                </span>
+                <div class="min-w-0 flex-1 space-y-3">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+                            x-text="@js(__('Mark the :count selected in-progress projects as completed?')).replace(':count', completableSelected.length)"></h2>
+                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                            {{ __('Completed projects can no longer be edited or reassigned. Only in-progress projects you are allowed to complete are included.') }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <x-input-label for="bulk_request_number" :value="__('Request Number')" required />
+                        <x-text-input id="bulk_request_number" name="request_number" type="text" maxlength="255" required
+                            x-model="requestNumber" class="mt-1 block w-full" />
+                    </div>
+
+                    <template x-if="completeErrors.length > 0">
+                        <x-alert type="error">
+                            <template x-for="message in completeErrors" :key="message">
+                                <p x-text="message"></p>
+                            </template>
+                        </x-alert>
+                    </template>
+                </div>
+            </div>
+
+            <div class="flex flex-col-reverse gap-2 bg-gray-50 px-6 py-4 dark:bg-gray-900/40 sm:flex-row sm:justify-end">
+                <x-secondary-button x-on:click="$dispatch('close')" x-bind:disabled="completing">
+                    {{ __('Cancel') }}
+                </x-secondary-button>
+                <x-primary-button x-bind:disabled="completing || completableSelected.length === 0 || requestNumber.trim() === ''"
+                    class="!bg-emerald-600 hover:!bg-emerald-500 active:!bg-emerald-700 focus-visible:!ring-emerald-500">
+                    <x-icon name="check" class="h-4 w-4" />
+                    {{ __('Complete') }}
+                </x-primary-button>
             </div>
         </form>
     </x-modal>

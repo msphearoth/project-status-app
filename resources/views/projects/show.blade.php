@@ -121,7 +121,7 @@
                         <dl class="grid grid-cols-1 gap-x-6 gap-y-5 rounded-b-xl border-t border-emerald-100 bg-emerald-50/60 p-5 dark:border-emerald-500/20 dark:bg-emerald-500/5 sm:grid-cols-3 sm:p-6">
                             <div>
                                 <dt class="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-400">{{ __('Project Amount') }}</dt>
-                                <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{{ number_format((float) $project->project_amount, 2) }}</dd>
+                                <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{{ $project->project_amount !== null ? number_format((float) $project->project_amount, 2) : '—' }}</dd>
                             </div>
                             <div>
                                 <dt class="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-400">{{ __('Request Number') }}</dt>
@@ -263,16 +263,10 @@
                     @endif
 
                     @can('complete', $project)
-                        <x-card :title="__('Complete Project')" icon="check-circle" :description="__('Record the final amount and request number to close this project.')">
+                        <x-card :title="__('Complete Project')" icon="check-circle" :description="__('Record the request number to close this project.')">
                             <form method="POST" action="{{ route('projects.complete', $project) }}">
                                 @csrf
                                 <div class="space-y-5 p-5 sm:p-6">
-                                    <div>
-                                        <x-input-label for="project_amount" :value="__('Project Amount')" required />
-                                        <x-text-input id="project_amount" name="project_amount" type="number" step="0.01" min="0" inputmode="decimal"
-                                            class="mt-1 block w-full" :value="old('project_amount')" required />
-                                        <x-input-error :messages="$errors->get('project_amount')" class="mt-2" />
-                                    </div>
                                     <div>
                                         <x-input-label for="request_number" :value="__('Request Number')" required />
                                         <x-text-input id="request_number" name="request_number" type="text"

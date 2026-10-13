@@ -6,10 +6,12 @@ use App\Enums\ProjectAssignmentAction;
 use App\Enums\ProjectStatus;
 use App\Http\Requests\AssignProjectRequest;
 use App\Http\Requests\BulkAssignProjectsRequest;
+use App\Http\Requests\BulkCompleteProjectsRequest;
 use App\Http\Requests\CompleteProjectRequest;
 use App\Models\Project;
 use App\Models\User;
 use App\Notifications\ProjectAssigned;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -92,7 +94,6 @@ class ProjectAssignmentController extends Controller
         DB::transaction(function () use ($request, $project) {
             $project->update([
                 'status' => ProjectStatus::Completed,
-                'project_amount' => $request->validated('project_amount'),
                 'request_number' => $request->validated('request_number'),
                 'completed_at' => now(),
             ]);
@@ -106,6 +107,41 @@ class ProjectAssignmentController extends Controller
 
         return redirect()->route('projects.show', $project)
             ->with('status', __('Project marked as completed.'));
+    }
+
+    /**
+     * Mark several selected in-progress projects as completed at once, saving
+     * the same request number on each. Called from the project list via AJAX;
+     * the message is also flashed so it shows once the list reloads.
+     */
+    public function bulkComplete(BulkCompleteProjectsRequest $request): JsonResponse
+    {
+        $projects = $request->projects();
+
+        DB::transaction(function () use ($request, $projects) {
+            foreach ($projects as $project) {
+                $project->update([
+                    'status' => ProjectStatus::Completed,
+                    'request_number' => $request->validated('request_number'),
+                    'completed_at' => now(),
+                ]);
+
+                $project->assignmentLogs()->create([
+                    'action' => ProjectAssignmentAction::Completed,
+                    'assigned_by' => $request->user()->id,
+                    'assigned_to' => $project->assignee_id,
+                ]);
+            }
+        });
+
+        $message = trans_choice(':count project marked as completed.|:count projects marked as completed.', $projects->count());
+
+        session()->flash('status', $message);
+
+        return response()->json([
+            'message' => $message,
+            'completed_ids' => $projects->pluck('id'),
+        ]);
     }
 
     /**

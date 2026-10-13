@@ -456,7 +456,6 @@ class ProjectWorkflowTest extends TestCase
 
         $this->actingAs($bystander)
             ->post(route('projects.complete', $project), [
-                'project_amount' => 1000,
                 'request_number' => 'REQ-1',
             ])
             ->assertForbidden();
@@ -491,7 +490,6 @@ class ProjectWorkflowTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('projects.complete', $project), [
-                'project_amount' => 1000,
                 'request_number' => 'REQ-1',
             ])
             ->assertRedirect(route('projects.show', $project));
@@ -499,7 +497,7 @@ class ProjectWorkflowTest extends TestCase
         $this->assertSame(ProjectStatus::Completed, $project->fresh()->status);
     }
 
-    public function test_assignee_can_complete_a_project_with_amount_and_request_number(): void
+    public function test_assignee_can_complete_a_project_with_a_request_number(): void
     {
         $admin = User::factory()->admin()->create();
         $assignee = User::factory()->create();
@@ -507,6 +505,11 @@ class ProjectWorkflowTest extends TestCase
             'created_by' => $admin->id,
             'assignee_id' => $assignee->id,
         ]);
+
+        $this->actingAs($assignee)->get(route('projects.show', $project))
+            ->assertOk()
+            ->assertSee('name="request_number"', false)
+            ->assertDontSee('name="project_amount"', false);
 
         $response = $this->actingAs($assignee)->post(route('projects.complete', $project), [
             'project_amount' => 12345.67,
@@ -517,7 +520,7 @@ class ProjectWorkflowTest extends TestCase
         $project->refresh();
 
         $this->assertSame(ProjectStatus::Completed, $project->status);
-        $this->assertSame('12345.67', $project->project_amount);
+        $this->assertNull($project->project_amount);
         $this->assertSame('REQ-9999', $project->request_number);
         $this->assertNotNull($project->completed_at);
         $this->assertDatabaseHas('project_assignment_logs', [
@@ -527,7 +530,7 @@ class ProjectWorkflowTest extends TestCase
         ]);
     }
 
-    public function test_completing_a_project_requires_amount_and_request_number(): void
+    public function test_completing_a_project_requires_a_request_number_but_not_an_amount(): void
     {
         $admin = User::factory()->admin()->create();
         $assignee = User::factory()->create();
@@ -538,7 +541,8 @@ class ProjectWorkflowTest extends TestCase
 
         $response = $this->actingAs($assignee)->post(route('projects.complete', $project), []);
 
-        $response->assertSessionHasErrors(['project_amount', 'request_number']);
+        $response->assertSessionHasErrors(['request_number'])
+            ->assertSessionDoesntHaveErrors(['project_amount']);
         $this->assertSame(ProjectStatus::InProgress, $project->fresh()->status);
     }
 
@@ -557,7 +561,6 @@ class ProjectWorkflowTest extends TestCase
 
         $this->actingAs($assignee)
             ->post(route('projects.complete', $project), [
-                'project_amount' => 100,
                 'request_number' => 'REQ-2',
             ])
             ->assertForbidden();
