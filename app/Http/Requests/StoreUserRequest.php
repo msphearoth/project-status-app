@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\UserPermission;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -31,6 +32,8 @@ class StoreUserRequest extends FormRequest
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'role' => ['required', new Enum(UserRole::class)],
+            'permissions' => ['array'],
+            'permissions.*' => ['distinct', new Enum(UserPermission::class)],
         ];
     }
 }

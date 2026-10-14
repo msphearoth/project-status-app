@@ -1,14 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
         <x-page-heading :title="__('Projects')" :description="__('Track, filter and assign every project in one place.')">
-            @can('create', \App\Models\Project::class)
+            @can('import', \App\Models\Project::class)
                 <x-button-link :href="route('projects.import.create')">
                     <x-icon name="arrow-up-tray" class="h-4 w-4" />
                     {{ __('Import from Excel') }}
                 </x-button-link>
             @endcan
 
-            @if ($projects->isNotEmpty())
+            @if ($projects->isNotEmpty() && auth()->user()->can('export', \App\Models\Project::class))
                 <x-button-link :href="route('projects.export', request()->query())">
                     <x-icon name="arrow-down-tray" class="h-4 w-4" />
                     {{ __('Export to Excel') }}
@@ -326,6 +326,14 @@
                                                         {{ __('Edit') }}
                                                     </x-dropdown-link>
                                                 @endcan
+                                                @can('reopen', $project)
+                                                    <button type="button"
+                                                        x-on:click="open = false; $dispatch('confirm-project-reopen', { url: @js(route('projects.reopen', $project)), code: @js($project->project_code) })"
+                                                        class="flex w-full items-center gap-2 px-4 py-2 text-start text-sm leading-5 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 focus:outline-none focus:bg-amber-50 dark:focus:bg-amber-500/10 transition duration-150 ease-in-out">
+                                                        <x-icon name="arrow-uturn-left" class="h-4 w-4" />
+                                                        {{ __('Revert to In Progress') }}
+                                                    </button>
+                                                @endcan
                                                 @can('delete', $project)
                                                     <div class="my-1 border-t border-gray-100 dark:border-gray-700"></div>
                                                     <button type="button"
@@ -374,6 +382,8 @@
             </x-card>
         </div>
     </div>
+
+    @include('projects._reopen-modal')
 
     <div x-data="{ deleteUrl: '', projectCode: '' }"
         x-on:confirm-project-deletion.window="deleteUrl = $event.detail.url; projectCode = $event.detail.code; $dispatch('open-modal', 'confirm-project-deletion')">

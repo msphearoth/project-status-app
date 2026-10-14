@@ -12,6 +12,15 @@
                     {{ __('Edit') }}
                 </x-button-link>
             @endcan
+            @can('reopen', $project)
+                <button type="button"
+                    x-data=""
+                    x-on:click="$dispatch('confirm-project-reopen', { url: @js(route('projects.reopen', $project)), code: @js($project->project_code) })"
+                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:bg-gray-800 dark:text-amber-400 dark:ring-amber-500/40 dark:hover:bg-amber-500/10 dark:focus-visible:ring-offset-gray-800 transition ease-in-out duration-150">
+                    <x-icon name="arrow-uturn-left" class="h-4 w-4" />
+                    {{ __('Revert to In Progress') }}
+                </button>
+            @endcan
             @can('delete', $project)
                 <x-danger-button
                     x-data=""
@@ -270,7 +279,7 @@
                                     <div>
                                         <x-input-label for="request_number" :value="__('Request Number')" required />
                                         <x-text-input id="request_number" name="request_number" type="text"
-                                            class="mt-1 block w-full" :value="old('request_number')" required />
+                                            class="mt-1 block w-full" :value="old('request_number', $project->request_number)" required />
                                         <x-input-error :messages="$errors->get('request_number')" class="mt-2" />
                                     </div>
                                 </div>
@@ -368,4 +377,8 @@
             </div>
         </div>
     </div>
+
+    @can('reopen', $project)
+        @include('projects._reopen-modal')
+    @endcan
 </x-app-layout>

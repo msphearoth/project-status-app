@@ -15,6 +15,22 @@ enum UserRole: string
         };
     }
 
+    public function description(): string
+    {
+        return match ($this) {
+            self::Admin => __('Full access to every feature, including managing users and their permissions.'),
+            self::User => __('Works on their assigned projects and only uses the features you switch on.'),
+        };
+    }
+
+    public function icon(): string
+    {
+        return match ($this) {
+            self::Admin => 'shield-check',
+            self::User => 'user',
+        };
+    }
+
     public function badgeClass(): string
     {
         return match ($this) {

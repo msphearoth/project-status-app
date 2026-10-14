@@ -39,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/projects/{project}/assign', [ProjectAssignmentController::class, 'assign'])->name('projects.assign');
     Route::delete('/projects/{project}/assign', [ProjectAssignmentController::class, 'unassign'])->name('projects.unassign');
     Route::post('/projects/{project}/complete', [ProjectAssignmentController::class, 'complete'])->name('projects.complete');
+    Route::post('/projects/{project}/reopen', [ProjectAssignmentController::class, 'reopen'])->name('projects.reopen');
 
     Route::resource('users', UserController::class)->except(['show']);
 

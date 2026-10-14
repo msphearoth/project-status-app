@@ -18,7 +18,7 @@ class ProjectImportController extends Controller
      */
     public function create(): View
     {
-        $this->authorize('create', Project::class);
+        $this->authorize('import', Project::class);
 
         return view('projects.import');
     }
@@ -28,7 +28,7 @@ class ProjectImportController extends Controller
      */
     public function template(): BinaryFileResponse
     {
-        $this->authorize('create', Project::class);
+        $this->authorize('import', Project::class);
 
         return Excel::download(new ProjectsImportTemplate, 'projects-import-template.xlsx');
     }

@@ -13,7 +13,7 @@ class ImportProjectsRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create', Project::class);
+        return $this->user()->can('import', Project::class);
     }
 
     /**

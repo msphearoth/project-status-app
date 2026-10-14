@@ -3,13 +3,15 @@
 namespace App\Policies;
 
 use App\Enums\ProjectStatus;
+use App\Enums\UserPermission;
 use App\Models\Project;
 use App\Models\User;
 
 /**
- * Admins can manage every project. Standard users can view, export, create and
- * assign pending projects, and work on (edit, reassign, complete) the projects
- * assigned to them. Deleting and unassigning are admin-only.
+ * Access to project features is granted per user through UserPermission
+ * (admins hold every permission). Independently of those permissions, users
+ * can always see and work on (edit, reassign, complete) the projects assigned
+ * to them, and edit pending projects they created.
  */
 class ProjectPolicy
 {
@@ -18,7 +20,7 @@ class ProjectPolicy
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->hasAccessTo(UserPermission::ViewProjects);
     }
 
     /**
@@ -26,7 +28,9 @@ class ProjectPolicy
      */
     public function view(User $user, Project $project): bool
     {
-        return true;
+        return $user->hasAccessTo(UserPermission::ViewProjects)
+            || $this->isAssignedTo($user, $project)
+            || (int) $project->created_by === $user->id;
     }
 
     /**
@@ -34,7 +38,23 @@ class ProjectPolicy
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->hasAccessTo(UserPermission::CreateProjects);
+    }
+
+    /**
+     * Determine whether the user can create projects from a spreadsheet.
+     */
+    public function import(User $user): bool
+    {
+        return $user->hasAccessTo(UserPermission::ImportProjects);
+    }
+
+    /**
+     * Determine whether the user can download the project list.
+     */
+    public function export(User $user): bool
+    {
+        return $user->hasAccessTo(UserPermission::ExportProjects);
     }
 
     /**
@@ -46,7 +66,7 @@ class ProjectPolicy
             return false;
         }
 
-        return $user->isAdmin()
+        return $user->hasAccessTo(UserPermission::ManageAllProjects)
             || $this->isAssignedTo($user, $project)
             || ($project->status === ProjectStatus::Pending && (int) $project->created_by === $user->id);
     }
@@ -56,7 +76,7 @@ class ProjectPolicy
      */
     public function delete(User $user, Project $project): bool
     {
-        return $user->isAdmin();
+        return $user->hasAccessTo(UserPermission::DeleteProjects);
     }
 
     /**
@@ -68,8 +88,8 @@ class ProjectPolicy
             return false;
         }
 
-        return $user->isAdmin()
-            || $project->status === ProjectStatus::Pending
+        return $user->hasAccessTo(UserPermission::ManageAllProjects)
+            || ($project->status === ProjectStatus::Pending && $user->hasAccessTo(UserPermission::AssignProjects))
             || $this->isAssignedTo($user, $project);
     }
 
@@ -78,7 +98,7 @@ class ProjectPolicy
      */
     public function unassign(User $user, Project $project): bool
     {
-        return $user->isAdmin()
+        return $user->hasAccessTo(UserPermission::UnassignProjects)
             && $project->status === ProjectStatus::InProgress
             && $project->assignee_id !== null;
     }
@@ -89,7 +109,16 @@ class ProjectPolicy
     public function complete(User $user, Project $project): bool
     {
         return $project->status === ProjectStatus::InProgress
-            && ($user->isAdmin() || $this->isAssignedTo($user, $project));
+            && ($user->hasAccessTo(UserPermission::ManageAllProjects) || $this->isAssignedTo($user, $project));
+    }
+
+    /**
+     * Determine whether the user can revert a completed project back to in progress.
+     */
+    public function reopen(User $user, Project $project): bool
+    {
+        return $project->status === ProjectStatus::Completed
+            && $user->hasAccessTo(UserPermission::ReopenProjects);
     }
 
     /**

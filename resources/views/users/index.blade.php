@@ -34,6 +34,7 @@
                             <tr>
                                 <th scope="col" class="ps-5 sm:ps-6 pe-4 py-3 text-start text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Name') }}</th>
                                 <th scope="col" class="px-4 py-3 text-start text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Role') }}</th>
+                                <th scope="col" class="hidden sm:table-cell px-4 py-3 text-start text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Access') }}</th>
                                 <th scope="col" class="hidden md:table-cell px-4 py-3 text-end text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Created Projects') }}</th>
                                 <th scope="col" class="hidden md:table-cell px-4 py-3 text-end text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Assigned Projects') }}</th>
                                 <th scope="col" class="pe-5 sm:pe-6 py-3"><span class="sr-only">{{ __('Actions') }}</span></th>
@@ -63,6 +64,17 @@
                                             @endif
                                             {{ $user->role->label() }}
                                         </span>
+                                    </td>
+                                    <td class="hidden sm:table-cell px-4 py-4 whitespace-nowrap">
+                                        @if ($user->isAdmin())
+                                            <span class="text-gray-500 dark:text-gray-400">{{ __('Full access') }}</span>
+                                        @else
+                                            <a href="{{ route('users.edit', $user) }}#permissions"
+                                               class="inline-flex items-center gap-1.5 rounded-md font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                                                <x-icon name="adjustments" class="h-4 w-4" />
+                                                {{ __(':count of :total permissions', ['count' => $user->permissions_count, 'total' => count(\App\Enums\UserPermission::cases())]) }}
+                                            </a>
+                                        @endif
                                     </td>
                                     <td class="hidden md:table-cell px-4 py-4 whitespace-nowrap text-end tabular-nums text-gray-700 dark:text-gray-300">{{ $user->created_projects_count }}</td>
                                     <td class="hidden md:table-cell px-4 py-4 whitespace-nowrap text-end tabular-nums text-gray-700 dark:text-gray-300">{{ $user->assigned_projects_count }}</td>

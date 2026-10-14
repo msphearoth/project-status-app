@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\ProjectAssignmentAction;
 use App\Enums\ProjectStatus;
 use App\Notifications\ProjectAssigned;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -92,13 +94,20 @@ class Project extends Model
     }
 
     /**
-     * The most recent assignment/reassignment/completion log entry, used to
-     * determine when the current assignee was assigned.
+     * The most recent assignment/reassignment log entry, used to determine when
+     * the current assignee was assigned. Completing or reopening a project
+     * doesn't change who it's assigned to, so those entries are ignored.
      *
      * @return HasOne<ProjectAssignmentLog, $this>
      */
     public function latestAssignmentLog(): HasOne
     {
-        return $this->hasOne(ProjectAssignmentLog::class)->latestOfMany('created_at');
+        return $this->hasOne(ProjectAssignmentLog::class)->ofMany(
+            ['created_at' => 'max', 'id' => 'max'],
+            fn (Builder $query) => $query->whereIn('action', [
+                ProjectAssignmentAction::Assigned,
+                ProjectAssignmentAction::Reassigned,
+            ]),
+        );
     }
 }

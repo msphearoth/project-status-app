@@ -8,6 +8,7 @@ use App\Http\Requests\AssignProjectRequest;
 use App\Http\Requests\BulkAssignProjectsRequest;
 use App\Http\Requests\BulkCompleteProjectsRequest;
 use App\Http\Requests\CompleteProjectRequest;
+use App\Http\Requests\ReopenProjectRequest;
 use App\Models\Project;
 use App\Models\User;
 use App\Notifications\ProjectAssigned;
@@ -107,6 +108,32 @@ class ProjectAssignmentController extends Controller
 
         return redirect()->route('projects.show', $project)
             ->with('status', __('Project marked as completed.'));
+    }
+
+    /**
+     * Revert a completed project back to in progress with its current assignee,
+     * recording the optional reason in the assignment history. A project whose
+     * assignee no longer exists goes back to pending instead. The request number
+     * is kept so it can be reused when the project is completed again.
+     */
+    public function reopen(ReopenProjectRequest $request, Project $project): RedirectResponse
+    {
+        DB::transaction(function () use ($request, $project) {
+            $project->update([
+                'status' => $project->assignee_id ? ProjectStatus::InProgress : ProjectStatus::Pending,
+                'completed_at' => null,
+            ]);
+
+            $project->assignmentLogs()->create([
+                'action' => ProjectAssignmentAction::Reopened,
+                'assigned_by' => $request->user()->id,
+                'assigned_to' => $project->assignee_id,
+                'note' => $request->validated('note'),
+            ]);
+        });
+
+        return redirect()->route('projects.show', $project)
+            ->with('status', __('Project reopened and set back to :status.', ['status' => $project->status->label()]));
     }
 
     /**

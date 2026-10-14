@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class UserController extends Controller
@@ -19,7 +20,7 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $users = User::withCount(['createdProjects', 'assignedProjects'])
+        $users = User::withCount(['createdProjects', 'assignedProjects', 'permissions'])
             ->orderBy('name')
             ->paginate(15);
 
@@ -43,7 +44,10 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request): RedirectResponse
     {
-        User::create($request->validated());
+        DB::transaction(function () use ($request) {
+            User::create($request->safe()->except('permissions'))
+                ->syncAccess($request->validated('permissions', []));
+        });
 
         return redirect()->route('users.index')
             ->with('status', __('User created successfully.'));
@@ -57,7 +61,7 @@ class UserController extends Controller
         $this->authorize('update', $user);
 
         return view('users.edit', [
-            'user' => $user,
+            'user' => $user->loadCount(['createdProjects', 'assignedProjects']),
             'isLastAdmin' => $this->isLastAdmin($user),
         ]);
     }
@@ -73,11 +77,15 @@ class UserController extends Controller
             ]);
         }
 
-        $user->update($request->safe()->except('password'));
+        DB::transaction(function () use ($request, $user) {
+            $user->update($request->safe()->except(['password', 'permissions']));
 
-        if ($request->validated('password')) {
-            $user->update(['password' => $request->validated('password')]);
-        }
+            if ($request->validated('password')) {
+                $user->update(['password' => $request->validated('password')]);
+            }
+
+            $user->syncAccess($request->validated('permissions', []));
+        });
 
         return redirect()->route('users.index')
             ->with('status', __('User updated successfully.'));

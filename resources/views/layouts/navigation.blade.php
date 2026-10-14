@@ -1,7 +1,9 @@
 @php
     $navigationLinks = array_filter([
         ['route' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'squares', 'active' => request()->routeIs('dashboard')],
-        ['route' => 'projects.index', 'label' => __('Projects'), 'icon' => 'folder', 'active' => request()->routeIs('projects.*') && ! request()->routeIs('projects.create')],
+        Auth::user()->can('viewAny', \App\Models\Project::class)
+            ? ['route' => 'projects.index', 'label' => __('Projects'), 'icon' => 'folder', 'active' => request()->routeIs('projects.*') && ! request()->routeIs('projects.create')]
+            : null,
         Auth::user()->can('create', \App\Models\Project::class)
             ? ['route' => 'projects.create', 'label' => __('New Project'), 'icon' => 'plus', 'active' => request()->routeIs('projects.create')]
             : null,

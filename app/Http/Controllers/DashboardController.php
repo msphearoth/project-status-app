@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProjectStatus;
+use App\Enums\UserPermission;
 use App\Exports\DashboardExport;
 use App\Models\Project;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -46,6 +47,8 @@ class DashboardController extends Controller
      */
     public function export(): BinaryFileResponse
     {
+        $this->authorize(UserPermission::ExportDashboard->value);
+
         $filename = 'dashboard-'.now()->format('Y-m-d').'.xlsx';
 
         return Excel::download(new DashboardExport($this->buildRows()), $filename);

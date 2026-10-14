@@ -100,7 +100,7 @@
             {{-- Breakdown by year and assignee --}}
             <x-card :title="__('In-Progress Projects by Assignee')" icon="users"
                 :description="__('Currently assigned projects awaiting completion, grouped by year and their current assignee, and how many days it has been since assignment.')">
-                @if ($rows->isNotEmpty())
+                @if ($rows->isNotEmpty() && auth()->user()->can(\App\Enums\UserPermission::ExportDashboard->value))
                     <x-slot name="actions">
                         <x-button-link :href="route('dashboard.export')">
                             <x-icon name="arrow-down-tray" class="h-4 w-4" />

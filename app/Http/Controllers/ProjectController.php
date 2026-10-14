@@ -43,7 +43,7 @@ class ProjectController extends Controller
      */
     public function export(Request $request): BinaryFileResponse
     {
-        $this->authorize('viewAny', Project::class);
+        $this->authorize('export', Project::class);
 
         $projects = $this->filteredQuery($request)->latest()->get();
 
